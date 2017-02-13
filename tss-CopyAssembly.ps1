@@ -1,7 +1,7 @@
 ﻿$SourceServerName = "mvillegas"
 $SourceDBName = "PLS_PRD"
 $DestServerName = "mvillegas"
-$DestDBName = "PLSPwb_INT_MAIN"
+$DestDBName = "PLS_INT_MAIN"
 
 $IsPWB = $DestDBName.ToUpper().StartsWith("PLSPWB_")
 $scriptpath = "D:\GitHub\tss-powershell\tss-CopyAssembly\"
