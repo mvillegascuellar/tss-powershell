@@ -4,12 +4,97 @@ $DestServerName = "mvillegas"
 $DestDBName = "PLSPwb_INT_MAIN"
 
 $IsPWB = $DestDBName.ToUpper().StartsWith("PLSPWB_")
-$scriptpath = "D:\GitHub\tss-powershell\tss-CopyAssembly\"
+#$scriptpath = "D:\GitHub\tss-powershell\tss-CopyAssembly\"
 $sourceassemblies = @()
 $SourceServer = Connect-DbaSqlServer -SqlServer $SourceServerName
 $sourceassemblies = $SourceServer.Databases[$SourceDBName].Assemblies | Where-Object {$_.isSystemObject -eq $false -and $_.name -like "PCMiler*"} 
 $DestServer = Connect-DbaSqlServer -SqlServer $DestServerName
 $DestDB = $DestServer.Databases[$DestDBName]
+
+#region Create Fx Scripts
+
+# =============================================
+# Create script for the PLS PCMiler Fuctions
+# =============================================
+[string] $PLSPCMilerFxs = "CREATE FUNCTION [dbo].[PCMMiles](@zip1 [nvarchar](4000), @zip2 [nvarchar](4000))
+RETURNS [nvarchar](4000) WITH EXECUTE AS CALLER
+AS 
+EXTERNAL NAME [PcMilerCLR].[UserDefinedFunctions].[PCMMiles]
+GO
+EXEC sys.sp_addextendedproperty @name=N'AutoDeployed', @value=N'yes' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'FUNCTION',@level1name=N'PCMMiles'
+GO
+EXEC sys.sp_addextendedproperty @name=N'SqlAssemblyFile', @value=N'PcMiler.cs' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'FUNCTION',@level1name=N'PCMMiles'
+GO
+EXEC sys.sp_addextendedproperty @name=N'SqlAssemblyFileLine', @value=11 , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'FUNCTION',@level1name=N'PCMMiles'
+GO
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[PCMDriverTime]') AND type in (N'FN', N'IF', N'TF', N'FS', N'FT'))
+DROP FUNCTION [dbo].[PCMDriverTime]
+GO
+CREATE FUNCTION [dbo].[PCMDriverTime](@zip1 [nvarchar](4000), @zip2 [nvarchar](4000))
+RETURNS [nvarchar](4000) WITH EXECUTE AS CALLER
+AS 
+EXTERNAL NAME [PcMilerCLR].[UserDefinedFunctions].[PCMDriverTime]
+GO
+"
+
+# =============================================
+# Create script for the PWB PCMiler Fuctions
+# =============================================
+[string] $PWBPCMilerFxs = "CREATE FUNCTION [dbo].[PCMMiles](@zip1 [nvarchar](4000), @zip2 [nvarchar](4000))
+RETURNS [nvarchar](4000) WITH EXECUTE AS CALLER
+AS 
+EXTERNAL NAME [PcMilerCLR].[UserDefinedFunctions].[PCMMiles]
+GO
+EXEC sys.sp_addextendedproperty @name=N'AutoDeployed', @value=N'yes' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'FUNCTION',@level1name=N'PCMMiles'
+GO
+EXEC sys.sp_addextendedproperty @name=N'SqlAssemblyFile', @value=N'PcMiler.cs' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'FUNCTION',@level1name=N'PCMMiles'
+GO
+EXEC sys.sp_addextendedproperty @name=N'SqlAssemblyFileLine', @value=11 , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'FUNCTION',@level1name=N'PCMMiles'
+GO
+IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[PCMDriverTime]') AND type in (N'FN', N'IF', N'TF', N'FS', N'FT'))
+DROP FUNCTION [dbo].[PCMDriverTime]
+GO
+CREATE FUNCTION [dbo].[PCMDriverTime](@zip1 [nvarchar](4000), @zip2 [nvarchar](4000))
+RETURNS [nvarchar](4000) WITH EXECUTE AS CALLER
+AS 
+EXTERNAL NAME [PcMilerCLR].[UserDefinedFunctions].[PCMDriverTime]
+GO
+CREATE FUNCTION [dbo].[PCMZipCode](@cityst [nvarchar](4000))
+RETURNS [nvarchar](4000) WITH EXECUTE AS CALLER
+AS 
+EXTERNAL NAME [PcMilerCLR].[UserDefinedFunctions].[PCMZipCode]
+GO
+EXEC sys.sp_addextendedproperty @name=N'AutoDeployed', @value=N'yes' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'FUNCTION',@level1name=N'PCMZipCode'
+GO
+EXEC sys.sp_addextendedproperty @name=N'SqlAssemblyFile', @value=N'PcMiler.cs' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'FUNCTION',@level1name=N'PCMZipCode'
+GO
+EXEC sys.sp_addextendedproperty @name=N'SqlAssemblyFileLine', @value=35 , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'FUNCTION',@level1name=N'PCMZipCode'
+GO
+/****** Object:  UserDefinedFunction [dbo].[PCMCityState]    Script Date: 12/14/2010 13:24:36 ******/
+CREATE FUNCTION [dbo].[PCMCityState](@zip [nvarchar](4000))
+RETURNS [nvarchar](4000) WITH EXECUTE AS CALLER
+AS 
+EXTERNAL NAME [PcMilerCLR].[UserDefinedFunctions].[PCMCityState]
+GO
+EXEC sys.sp_addextendedproperty @name=N'AutoDeployed', @value=N'yes' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'FUNCTION',@level1name=N'PCMCityState'
+GO
+EXEC sys.sp_addextendedproperty @name=N'SqlAssemblyFile', @value=N'PcMiler.cs' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'FUNCTION',@level1name=N'PCMCityState'
+GO
+EXEC sys.sp_addextendedproperty @name=N'SqlAssemblyFileLine', @value=23 , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'FUNCTION',@level1name=N'PCMCityState'
+GO
+CREATE FUNCTION [dbo].[PCMSearchLocations](@zipCode [nvarchar](4000), @cityState [nvarchar](4000), @searchMode [int])
+RETURNS [nvarchar](4000) WITH EXECUTE AS CALLER
+AS 
+EXTERNAL NAME [PcMilerCLR].[UserDefinedFunctions].[PCMSearchLocations]
+GO
+CREATE FUNCTION [dbo].[PCMIsValidLocation](@zipCode [nvarchar](4000), @cityState [nvarchar](4000))
+RETURNS [bit] WITH EXECUTE AS CALLER
+AS 
+EXTERNAL NAME [PcMilerCLR].[UserDefinedFunctions].[PCMIsValidLocation]
+GO
+"
+#endregion
+
 
 Write-Output "Iniciando verificación de configuraciones de base de datos"
 
@@ -91,11 +176,13 @@ foreach ($assembly in $sourceassemblies)
 if ($IsPWB)
 {
     Write-Output "Creando funciones para PWB"
-    Invoke-Sqlcmd -ServerInstance $DestServerName -Database $DestDBName -InputFile "$scriptpath\PLSPWB.CreatePCMilerFunctions.sql"
+    #Invoke-Sqlcmd -ServerInstance $DestServerName -Database $DestDBName -InputFile "$scriptpath\PLSPWB.CreatePCMilerFunctions.sql"
+    Invoke-Sqlcmd -ServerInstance $DestServerName -Database $DestDBName -Query $PWBPCMilerFxs
 }
 else
 {
     Write-Output "Creando funciones para PLS"
-    Invoke-Sqlcmd -ServerInstance $DestServerName -Database $DestDBName -InputFile "$scriptpath\PLS.CreatePCMilerFunctions.sql"
+    #Invoke-Sqlcmd -ServerInstance $DestServerName -Database $DestDBName -InputFile "$scriptpath\PLS.CreatePCMilerFunctions.sql"
+    Invoke-Sqlcmd -ServerInstance $DestServerName -Database $DestDBName -Query $PLSPCMilerFxs
 }
 
