@@ -1,5 +1,6 @@
-﻿function tss-CopyAssemblyPCMiler {
+﻿function Copy-tssAssemblyPCMiler {
 
+    [CmdletBinding()]
     param (
     [parameter(Mandatory=$true)]
     [string] $SourceServerName,
@@ -103,7 +104,7 @@
     #endregion
 
 
-    Write-Output "Iniciando verificación de configuraciones de base de datos"
+    Write-Verbose "Iniciando verificación de configuraciones de base de datos"
 
     <#Verificar si la base de datos destino es trustworthy#>
     if ($DestDB.Trustworthy -eq $false)
@@ -129,7 +130,7 @@
 	    catch { Write-Exception $_ }
     }
 
-    Write-Output "Eliminando las funciones dependientes de PCMiler"
+    Write-Verbose "Eliminando las funciones dependientes de PCMiler"
 
     if ($IsPWB)
         {$UserfxList = "PCMMiles","PCMDriverTime","PCMZipCode","PCMCityState","PCMSearchLocations","PCMIsValidLocation"}
@@ -156,7 +157,7 @@
             $AssemblyName = $assembly.name
             if ($DestDB.Assemblies.Name -contains $assembly.name)
 	        {
-		        Write-Output "Eliminando assembly $AssemblyName"
+		        Write-Verbose "Eliminando assembly $AssemblyName"
 		        $DestDB.Assemblies[$assembly.name].Drop()
 	        }
         }
@@ -171,7 +172,7 @@
         try
 	    {
             $AssemblyName = $assembly.name
-            Write-Output "Creando assembly $AssemblyName"
+            Write-Verbose "Creando assembly $AssemblyName"
             $DestDB.ExecuteNonQuery($assembly.Script()) | Out-Null  
         }
 	    catch { 
@@ -182,12 +183,12 @@
 
     if ($IsPWB)
     {
-        Write-Output "Creando funciones para PWB"
+        Write-Verbose "Creando funciones para PWB"
         Invoke-Sqlcmd -ServerInstance $DestServerName -Database $DestDBName -Query $PWBPCMilerFxs
     }
     else
     {
-        Write-Output "Creando funciones para PLS"
+        Write-Verbose "Creando funciones para PLS"
         Invoke-Sqlcmd -ServerInstance $DestServerName -Database $DestDBName -Query $PLSPCMilerFxs
     }
 
