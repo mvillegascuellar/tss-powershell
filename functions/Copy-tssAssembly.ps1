@@ -3,21 +3,24 @@
     [CmdletBinding()]
     param (
     [parameter(Mandatory=$true)]
-    [string] $SourceServerName,
+    [string] $SourceEnvironment,
     [parameter(Mandatory=$true)]
-    [string] $SourceDBName,
+    [string] $SourceSubEnvironment,
     [parameter(Mandatory=$true)]
-    [string] $DestServerName,
+    [string] $DestEnvironment,
     [parameter(Mandatory=$true)]
-    [string] $DestDBName
+    [string] $DestSubEnvironment
     )
     
-    $IsPWB = $DestDBName.ToUpper().StartsWith("PLSPWB_")
+    
     $sourceassemblies = @()
-    $SourceServer = Connect-DbaSqlServer -SqlServer $SourceServerName
-    $sourceassemblies = $SourceServer.Databases[$SourceDBName].Assemblies | Where-Object {$_.isSystemObject -eq $false -and $_.name -like "PCMiler*"} 
-    $DestServer = Connect-DbaSqlServer -SqlServer $DestServerName
-    $DestDB = $DestServer.Databases[$DestDBName]
+    $SourceServer = Get-tssConnection -Environment $SourceEnvironment
+    $SourcePWBDB = Get-tssDatabaseName -Environment $SourceEnvironment -SubEnvironment $SourceSubEnvironment -Database PLSPWB
+    $sourceassemblies = $SourceServer.databases[$SourcePWBDB].Assemblies | Where-Object {$_.isSystemObject -eq $false -and $_.name -like "PCMiler*"} 
+    $DestServer = Get-tssConnection -Environment $DestEnvironment
+
+    [string]$DestPLSDB = Get-tssDatabaseName -Environment $DestEnvironment -SubEnvironment $DestSubEnvironment -Database PLS
+    [string]$DestPWBDB = Get-tssDatabaseName -Environment $DestEnvironment -SubEnvironment $DestSubEnvironment -Database PLSPWB
 
     #region Create Fx Scripts
 
@@ -105,65 +108,75 @@
 
 
     Write-Verbose "Iniciando verificación de configuraciones de base de datos"
-
     <#Verificar si la base de datos destino es trustworthy#>
-    if ($DestDB.Trustworthy -eq $false)
+    if ($DestServer.databases[$DestPLSDB].Trustworthy -eq $false)
     {
-        Write-Warning "Configurando como Trustworthy la base de datos $DestDBName"
-        $sql = "ALTER DATABASE $DestDBName SET TRUSTWORTHY ON"
+        Write-Warning "Configurando como Trustworthy la base de datos $DestPLSDB"
+        $sql = "ALTER DATABASE $DestPLSDB SET TRUSTWORTHY ON"
 	    try
 	    {
 		    $DestServer.ConnectionContext.ExecuteNonQuery($sql) | Out-Null
 	    }
-	    catch { Write-Exception $_ }
+	    catch { Write-Error $_ }
     }
-
-    <#Verificar el owner de la base de datos destino es el sa#>
-    if ($DestDB.Owner -ne "sa")
+    if ($DestServer.databases[$DestPWBDB].Trustworthy -eq $false)
     {
-        Write-Warning "Configurando usuario sa como owner de la base de datos $DestDBName"
+        Write-Warning "Configurando como Trustworthy la base de datos $DestPWBDB"
+        $sql = "ALTER DATABASE $DestPWBDB SET TRUSTWORTHY ON"
 	    try
 	    {
-		    $DestDB.SetOwner("sa")
-            $DestDB.Alter()
+		    $DestServer.parent.ConnectionContext.ExecuteNonQuery($sql) | Out-Null
 	    }
-	    catch { Write-Exception $_ }
-    }
-
-    Write-Verbose "Eliminando las funciones dependientes de PCMiler"
-
-    if ($IsPWB)
-        {$UserfxList = "PCMMiles","PCMDriverTime","PCMZipCode","PCMCityState","PCMSearchLocations","PCMIsValidLocation"}
-    else 
-        {$UserfxList = "PCMMiles","PCMDriverTime"}
-
-    $UserfxObjs = $DestDB.UserDefinedFunctions | Where-Object {$_.schema -eq "dbo" -and $UserfxList -contains $_.name} 
+	    catch { Write-Error $_ }
+    } 
+    
+    Write-Verbose "Eliminando las funciones dependientes de PCMiler en $DestPLSDB"   
+    $UserfxList = "PCMMiles","PCMDriverTime","PCMZipCode","PCMCityState","PCMSearchLocations","PCMIsValidLocation"
+    $UserfxObjs = $DestServer.databases[$DestPLSDB].UserDefinedFunctions | Where-Object {$_.schema -eq "dbo" -and $UserfxList -contains $_.name}
     foreach ($ufx in $UserfxObjs)
     {
-        if ($DestDB.UserDefinedFunctions.Contains($ufx.name))
+        if ($DestServer.databases[$DestPLSDB].UserDefinedFunctions.Contains($ufx.name))
         {
             try
 	        {
-                $DestDB.UserDefinedFunctions[$ufx.name].drop()
+                $DestServer.databases[$DestPLSDB].UserDefinedFunctions[$ufx.name].drop()
             }
-	        catch { Write-Exception $_ }
+	        catch { Write-Error $_ }
         }
     }
+    Write-Verbose "Eliminando las funciones dependientes de PCMiler en $DestPWBDB"   
+    $UserfxObjs = $DestServer.databases[$DestPWBDB].UserDefinedFunctions | Where-Object {$_.schema -eq "dbo" -and $UserfxList -contains $_.name}
+    foreach ($ufx in $UserfxObjs)
+    {
+        if ($DestServer.databases[$DestPWBDB].UserDefinedFunctions.Contains($ufx.name))
+        {
+            try
+	        {
+                $DestServer.databases[$DestPWBDB].UserDefinedFunctions[$ufx.name].drop()
+            }
+	        catch { Write-Error $_ }
+        }
+    }
+
 
     foreach ($assembly in $sourceassemblies | sort-object -Property Name -Descending)
     {
         try
 	    {
             $AssemblyName = $assembly.name
-            if ($DestDB.Assemblies.Name -contains $assembly.name)
+            if ($DestServer.databases[$DestPLSDB].Assemblies.Name -contains $assembly.name)
 	        {
-		        Write-Verbose "Eliminando assembly $AssemblyName"
-		        $DestDB.Assemblies[$assembly.name].Drop()
+		        Write-Verbose "Eliminando assembly $AssemblyName en $DestPLSDB"
+		        $DestServer.databases[$DestPLSDB].Assemblies[$AssemblyName].Drop()
+	        }
+            if ($DestServer.databases[$DestPWBDB].Assemblies.Name -contains $assembly.name)
+	        {
+		        Write-Verbose "Eliminando assembly $AssemblyName en $DestPWBDB"
+		        $DestServer.databases[$DestPWBDB].Assemblies[$AssemblyName].Drop()
 	        }
         }
 	    catch { 
-		    $_ 
-		    continue
+		    Write-Error $_ 
 	    }
     }
 
@@ -172,24 +185,20 @@
         try
 	    {
             $AssemblyName = $assembly.name
-            Write-Verbose "Creando assembly $AssemblyName"
-            $DestDB.ExecuteNonQuery($assembly.Script()) | Out-Null  
+            Write-Verbose "Creando assembly $AssemblyName para $DestPLSDB"
+            $DestServer.databases[$DestPLSDB].ExecuteNonQuery($assembly.Script()) 
+            Write-Verbose "Creando assembly $AssemblyName para $DestPWBDB"
+            $DestServer.databases[$DestPWBDB].ExecuteNonQuery($assembly.Script()) 
         }
 	    catch { 
-		    $_ 
-		    continue
+		    Write-Error $_ 
 	    } 
     }
 
-    if ($IsPWB)
-    {
-        Write-Verbose "Creando funciones para PWB"
-        Invoke-Sqlcmd -ServerInstance $DestServerName -Database $DestDBName -Query $PWBPCMilerFxs
-    }
-    else
-    {
-        Write-Verbose "Creando funciones para PLS"
-        Invoke-Sqlcmd -ServerInstance $DestServerName -Database $DestDBName -Query $PLSPCMilerFxs
-    }
-
+    Write-Verbose "Creando funciones para PLS"
+    Invoke-Sqlcmd -ServerInstance $DestServer -Database $DestPLSDB -Query $PLSPCMilerFxs
+    
+    Write-Verbose "Creando funciones para PWB"
+    Invoke-Sqlcmd -ServerInstance $DestServer -Database $DestPWBDB -Query $PWBPCMilerFxs
+ 
 }

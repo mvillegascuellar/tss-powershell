@@ -1,4 +1,4 @@
-﻿function Get-tssDatabase {
+﻿function Get-tssDatabaseName {
     
     [CmdletBinding()]
     param (
@@ -10,8 +10,7 @@
     [string] $Database
     )
 
-    [string] $FullDatabaseName = ''
-    $tssDB
+    [string]$FullDatabaseName = '';
     
     if (($SubEnvironment -eq "MAIN" -or $SubEnvironment -eq "HOTFIX") -and (($Environment -eq 'INT') -or ($Environment -eq 'QA') -or ($Environment -eq 'UAT')))
         { $FullDatabaseName = $Database + "_" + $Environment + "_" + $SubEnvironment }
@@ -21,16 +20,6 @@
         { $FullDatabaseName = $Database + "_PRD" }
     else { $FullDatabaseName = $Database + "_" + $Environment + "_" + $SubEnvironment }
 
-    $DBServer = Get-tssConnection -Environment $Environment
-    if ($DBServer.databases.contains($FullDatabaseName))
-    {
-        $tssDB = $DBServer.databases[$FullDatabaseName]
-    }
-    else
-    {
-        Write-Error -Message "Invalid Environment and Sub-Environment combination." 
-    }
-
-    return $tssDB
+    return $FullDatabaseName;
 
 }
