@@ -15,12 +15,29 @@
     
     $sourceassemblies = @()
     $SourceServer = Get-tssConnection -Environment $SourceEnvironment
-    $SourcePWBDB = Get-tssDatabaseName -Environment $SourceEnvironment -SubEnvironment $SourceSubEnvironment -Database PLSPWB
-    $sourceassemblies = $SourceServer.databases[$SourcePWBDB].Assemblies | Where-Object {$_.isSystemObject -eq $false -and $_.name -like "PCMiler*"} 
+    [string]$SourcePWBDB = Get-tssDatabaseName -SQLServer $SourceServer -Environment $SourceEnvironment -SubEnvironment $SourceSubEnvironment -Database PLSPWB
     $DestServer = Get-tssConnection -Environment $DestEnvironment
+    [string]$DestPLSDB = Get-tssDatabaseName -SQLServer $DestServer -Environment $DestEnvironment -SubEnvironment $DestSubEnvironment -Database PLS
+    [string]$DestPWBDB = Get-tssDatabaseName -SQLServer $DestServer -Environment $DestEnvironment -SubEnvironment $DestSubEnvironment -Database PLSPWB
 
-    [string]$DestPLSDB = Get-tssDatabaseName -Environment $DestEnvironment -SubEnvironment $DestSubEnvironment -Database PLS
-    [string]$DestPWBDB = Get-tssDatabaseName -Environment $DestEnvironment -SubEnvironment $DestSubEnvironment -Database PLSPWB
+    if ($SourcePWBDB -eq $null -or $SourcePWBDB.Trim() -eq '')
+    {
+        Write-Error "No es posible conectar a la base de datos PWB del Origen";
+        return $null
+    }
+    if ($DestPLSDB -eq $null -or $DestPLSDB.Trim() -eq '')
+    {
+        Write-Error "No es posible conectar a la base de datos PLS del Destino"
+        return $null
+    }
+    if ($DestPWBDB -eq $null -or $DestPWBDB.Trim() -eq '')
+    {
+        Write-Error "No es posible conectar a la base de datos PWB del Destino"
+        return $null
+    }
+
+
+    $sourceassemblies = $SourceServer.databases[$SourcePWBDB].Assemblies | Where-Object {$_.isSystemObject -eq $false -and $_.name -like "PCMiler*"} 
 
     #region Create Fx Scripts
 
@@ -125,10 +142,32 @@
         $sql = "ALTER DATABASE $DestPWBDB SET TRUSTWORTHY ON"
 	    try
 	    {
-		    $DestServer.parent.ConnectionContext.ExecuteNonQuery($sql) | Out-Null
+		    $DestServer.ConnectionContext.ExecuteNonQuery($sql) | Out-Null
 	    }
 	    catch { Write-Error $_ }
     } 
+
+    <#Verificar el owner de la base de datos destino es el sa#>
+    if ($DestServer.databases[$DestPLSDB].Owner -ne "sa")
+    {
+        Write-Warning "Configurando usuario sa como owner de la base de datos $DestPLSDB"
+	    try
+	    {
+		    $DestServer.databases[$DestPLSDB].SetOwner("sa")
+            $DestServer.databases[$DestPLSDB].Alter()
+	    }
+	    catch { Write-Exception $_ }
+    }
+    if ($DestServer.databases[$DestPWBDB].Owner -ne "sa")
+    {
+        Write-Warning "Configurando usuario sa como owner de la base de datos $DestPWBDB"
+	    try
+	    {
+		    $DestServer.databases[$DestPWBDB].SetOwner("sa")
+            $DestServer.databases[$DestPWBDB].Alter()
+	    }
+	    catch { Write-Exception $_ }
+    }
     
     Write-Verbose "Eliminando las funciones dependientes de PCMiler en $DestPLSDB"   
     $UserfxList = "PCMMiles","PCMDriverTime","PCMZipCode","PCMCityState","PCMSearchLocations","PCMIsValidLocation"

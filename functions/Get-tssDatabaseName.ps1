@@ -3,11 +3,14 @@
     [CmdletBinding()]
     param (
     [parameter(Mandatory=$true)]
+    [object] $SQLServer,
+    [parameter(Mandatory=$true)]
     [string] $Environment,
     [parameter(Mandatory=$true)]
     [string] $SubEnvironment,
     [parameter(Mandatory=$true)]
-    [string] $Database
+    [string] $Database,
+    [string] $DBSufix
     )
 
     [string]$FullDatabaseName = '';
@@ -20,6 +23,14 @@
         { $FullDatabaseName = $Database + "_PRD" }
     else { $FullDatabaseName = $Database + "_" + $Environment + "_" + $SubEnvironment }
 
-    return $FullDatabaseName;
+    if ($DBSufix -ne $null -and $DBSufix.Trim() -ne '')
+    {$FullDatabaseName = $FullDatabaseName  + "_" + $DBSufix}
+
+    foreach ($db in $SQLServer.databases)
+    {
+        if ($db.name -eq $FullDatabaseName) {return $FullDatabaseName}
+    }
+    
+    return $null;
 
 }

@@ -10,8 +10,19 @@
 
     $DBServer = Get-tssConnection -Environment $Environment
     
-    [string]$PLSDB = Get-tssDatabaseName -Environment $Environment -SubEnvironment $SubEnvironment -Database PLS
-    [string]$PWBDB = Get-tssDatabaseName -Environment $Environment -SubEnvironment $SubEnvironment -Database PLSPWB
+    [string]$PLSDB = Get-tssDatabaseName -SQLServer $DBServer -Environment $Environment -SubEnvironment $SubEnvironment -Database PLS
+    [string]$PWBDB = Get-tssDatabaseName -SQLServer $DBServer -Environment $Environment -SubEnvironment $SubEnvironment -Database PLSPWB
+
+    if ($PLSDB -eq $null -or $PLSDB.Trim() -eq '')
+    {
+        Write-Error "No es posible conectar a la base de datos PLS"
+        return $null
+    }
+    if ($PWBDB -eq $null -or $PWBDB.Trim() -eq '')
+    {
+        Write-Error "No es posible conectar a la base de datos PWB"
+        return $null
+    }
 
     [string]$plssql = "ALTER DATABASE $PLSDB SET NEW_BROKER WITH ROLLBACK IMMEDIATE"
     [string]$pwbsql = "ALTER DATABASE $PWBDB SET NEW_BROKER WITH ROLLBACK IMMEDIATE"
