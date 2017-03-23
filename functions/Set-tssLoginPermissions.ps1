@@ -91,4 +91,4 @@
         }
     }
 }
-Set-tssLoginPermissions -Environment DEV -SubEnvironment PRD_OLD  -Verbose
+#Set-tssLoginPermissions -Environment DEV -SubEnvironment PRD_OLD  -Verbose
