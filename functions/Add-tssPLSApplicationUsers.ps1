@@ -115,6 +115,10 @@ function Add-tssPLSApplicationUsers {
         $UsersScript = $UsersScript + "INSERT INTO @x VALUES('" + $analyst + "') `n"
     }
 
+    $UsersScript = $UsersScript + "INSERT INTO @x VALUES('SVC_IISDEV1') `n"
+    $UsersScript = $UsersScript + "INSERT INTO @x VALUES('SVC_IISQA1') `n"
+    $UsersScript = $UsersScript + "INSERT INTO @x VALUES('plsediadmin') `n"
+
     $UsersScript = $UsersScript + "DECLARE xCursor CURSOR
     FOR SELECT username FROM @x;
     OPEN xCursor;

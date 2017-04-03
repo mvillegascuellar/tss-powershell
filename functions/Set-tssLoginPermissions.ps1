@@ -11,7 +11,6 @@
     Write-Verbose "Preparando conexión a la base de datos"
     $EnvServer = Get-tssConnection -Environment $Environment
     [string]$PLSDBName = Get-tssDatabaseName -SQLServer $EnvServer -Environment $Environment -SubEnvironment $SubEnvironment -Database PLS
-    $PLSDBName
     if ($PLSDBName -eq $null -or $PLSDBName.Trim() -eq '') {
         Write-Error "No es posible conectar a la base de datos PLS";
         return $null
@@ -30,10 +29,10 @@
     $logins = New-Object -TypeName System.Collections.ArrayList
 
     if ($Environment -cin ('DEV','UAT')){
-        $logins.Add('tssuser')
+        $logins.Add('tssuser') | Out-Null
     }
     if ($Environment -cin ('QA','INT','UAT','PERF')){
-        $logins.Add('xpouser')
+        $logins.Add('xpouser') | Out-Null
     }
 
     foreach ($login in $logins){
