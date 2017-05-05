@@ -1,21 +1,16 @@
 function Add-tssPLSApplicationUsers {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         [parameter(Mandatory=$true)]
+        [Validateset('DEV', 'INT', 'QA', 'UAT', 'PERF', 'PROD', 'LOCAL')]
         [string]$Environment,
         [parameter(Mandatory=$true)]
         [string]$SubEnvironment
     )
 
-    Write-Verbose "Preparando conexiÃ³n a la base de datos"
-    $EnvServer = Get-tssConnection -Environment $Environment
-    [string]$PLSDBName = Get-tssDatabaseName -SQLServer $EnvServer -Environment $Environment -SubEnvironment $SubEnvironment -Database PLS
-    if ($PLSDBName -eq $null -or $PLSDBName.Trim() -eq '') {
-        Write-Error "No es posible conectar a la base de datos PLS";
-        return $null
-    }
-    $PLSDB = $EnvServer.databases[$PLSDBName]
-
+    Write-Verbose "Preparando conexión a la base de datos"
+    $PLSDB = Get-tssDatabase -Environment $Environment -SubEnvironment $SubEnvironment -Database PLS
+   
     Write-Verbose "Preparando los usuarios a insertar"
     $Developers = New-Object -TypeName System.Collections.ArrayList
     $QAs = New-Object -TypeName System.Collections.ArrayList
@@ -187,14 +182,12 @@ function Add-tssPLSApplicationUsers {
                 SET @v_IsDefaultCompany = '0'
         
             SET @UserCompanyId = NULL
-            PRINT 'Get User Company Id: '+@UserName;
             SELECT @UserCompanyId = UserCompanyId
             FROM UserCompany
             WHERE UserId = @UserId
                     AND CompanyId = @CompanyId;
             IF ISNULL(@UserCompanyId, 0) = 0
                 BEGIN
-                    PRINT 'Insert User Company for Company: '+@CompanyCode;
                     EXEC spuSystemIndexGetId
                         @TableName = N'UserCompany',
                         @Quantity = 1,
@@ -220,11 +213,9 @@ function Add-tssPLSApplicationUsers {
                         GETDATE()
                     );
                 END;
-            PRINT 'Get User Company Role Id: '+@UserName;
             SELECT @UserCompanyRoleId = UserCompanyRoleId
             FROM UserCompanyRole
             WHERE UserCompanyId = @UserCompanyId;
-            PRINT 'Validates if user exist: '+@UserName;
             IF(
                 (
                     SELECT COUNT(*)
@@ -240,7 +231,6 @@ function Add-tssPLSApplicationUsers {
                         AND RoleId = @RoleId
                     ) = 0)
                 BEGIN
-                    PRINT 'Update the UserCompany Role Admin: '+@UserName;
                     UPDATE dbo.UserCompanyRole
                         SET
                         RoleId = @RoleId,
@@ -251,7 +241,6 @@ function Add-tssPLSApplicationUsers {
                 END;
             ELSE
                 BEGIN
-                    PRINT 'Verify if the UserCompany Role Access Admin exist: '+@UserName;
                     IF(
                         (
                         SELECT COUNT(*)
@@ -260,7 +249,6 @@ function Add-tssPLSApplicationUsers {
                             AND RoleId = @RoleId
                         ) = 0)
                         BEGIN
-                        PRINT 'Insert the UserCompany Role Access Admin exist: '+@UserName;
                         DECLARE @p3 INT;
                         EXEC spuSystemIndexGetId
                                 @TableName = N'UserCompanyRole',
@@ -280,7 +268,6 @@ function Add-tssPLSApplicationUsers {
                                 @UpdatedBy = 'PLSBOADMIN',
                                 @UpdateDate = @CreationDate;
                         END;
-                    PRINT 'Verify if the UserCompany Role Admin exist: '+@UserName;
                     IF(
                         (
                         SELECT COUNT(*)
@@ -289,7 +276,6 @@ function Add-tssPLSApplicationUsers {
                             AND RoleId = @RoleAdminId
                         ) = 0)
                         BEGIN
-                        PRINT 'Insert the UserCompany Role Admin exist: '+@UserName;
                         DECLARE @p6 INT;
                         EXEC spuSystemIndexGetId
                                 @TableName = N'UserCompanyRole',
@@ -405,12 +391,13 @@ function Add-tssPLSApplicationUsers {
     COMMIT;
     GO"
 
-    Write-Verbose "Creando los usuarios"
-    $PLSDB.ExecuteNonQuery($UsersScript)
-    #ejecutamos el script una segunda vez para asegurar que pase bien
-    #este es un bug conocido del script
-    $PLSDB.ExecuteNonQuery($UsersScript)
+    if ($PSCmdlet.ShouldProcess($PLSDB,'Creando usuarios PLS')) {
+
+        $PLSDB.ExecuteNonQuery($UsersScript)
+        #ejecutamos el script una segunda vez para asegurar que pase bien
+        #este es un bug conocido del script
+        $PLSDB.ExecuteNonQuery($UsersScript)
+
+    }
 
 }
-
-#Add-tssPLSApplicationUsers -Environment DEV -SubEnvironment PRD_OLD -Verbose

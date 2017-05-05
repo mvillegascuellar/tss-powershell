@@ -1,7 +1,8 @@
 ﻿function Copy-tssPLSApplicationSettings{
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         [parameter(Mandatory=$true)]
+        [Validateset('DEV', 'INT', 'QA', 'UAT', 'PERF', 'PROD', 'LOCAL')]
         [string]$Environment,
         [parameter(Mandatory=$true)]
         [string]$SourceSubEnvironment,
@@ -10,21 +11,13 @@
     )
 
     Write-Verbose "Preparando conexión a Origen"
-    $EnvServer = Get-tssConnection -Environment $Environment
-    [string]$SourcePLSDB = Get-tssDatabaseName -SQLServer $EnvServer -Environment $Environment -SubEnvironment $SourceSubEnvironment -Database PLS
-    if ($SourcePLSDB -eq $null -or $SourcePLSDB.Trim() -eq '') {
-        Write-Error "No es posible conectar a la base de datos PWB del Origen";
-        return $null
-    }
+    $SourcePLSDB = Get-tssDatabase -Environment $Environment -SubEnvironment $SourceSubEnvironment -Database PLS
 
     Write-Verbose "Preparando conexión a Destino"
-    [string]$DestPLSDB = Get-tssDatabaseName -SQLServer $EnvServer -Environment $Environment -SubEnvironment $DestSubEnvironment -Database PLS
-    if ($DestPLSDB -eq $null -or $DestPLSDB.Trim() -eq '') {
-        Write-Error "No es posible conectar a la base de datos PLS del Destino"
-        return $null
-    }
+    $TargetPLSDB = Get-tssDatabase -Environment $Environment -SubEnvironment $DestSubEnvironment -Database PLS
+    
 
-    [string] $sqlCopyAppSettings = "declare @t_configurations TABLE
+  [string] $sqlCopyAppSettings = "declare @t_configurations TABLE
                                     (GroupName varchar(50)
                                     ,Name	varchar(50))
 
@@ -46,7 +39,8 @@
                                     ('XpoRealTime', 'CustomerOrderBoardUrl'),
                                     ('XpoRealTime', 'WorkOrderBoardUrl'),
                                     ('XpoRealTime', 'OrderChargeBoardUrl'),
-                                    ('XpoRealTime', 'DashboardApiUrl');
+                                    ('XpoRealTime', 'DashboardApiUrl'),
+                                    ('XpoRealTime', 'EquipmentBoardUrl');
 
                                     update a
                                     set a.Value = b.Value
@@ -60,8 +54,9 @@
 	                                     FROM @t_configurations c
 	                                    WHERE a.GroupName = c.GroupName
 	                                    AND a.Name = c.Name)"
+ 
 
-    Write-Verbose "Copiando Application Settings"
-    Invoke-Sqlcmd2 -ServerInstance $EnvServer.Name -Database $DestPLSDB -Query $sqlCopyAppSettings
-
+    if ($PSCmdlet.ShouldProcess($TargetPLSDB,"Copiando Application Settings")) {
+        $TargetPLSDB.ExecuteNonQuery($sqlCopyAppSettings)
+    }
 }

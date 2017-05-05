@@ -3,19 +3,18 @@
     [CmdletBinding()]
     param (
     [parameter(Mandatory=$true)]
+    [Validateset('DEV', 'INT', 'QA', 'UAT', 'PERF', 'PROD', 'LOCAL')]
     [string] $Environment,
     [parameter(Mandatory=$true)]
     [string] $SubEnvironment,
     [parameter(Mandatory=$true)]
+    [Validateset('PLS', 'PLSPWB', 'PLSWEB')]
     [string] $Database
     )
 
     [string] $FullDatabaseName = ''
-    $tssDB
-    
-    if (($SubEnvironment -eq "MAIN" -or $SubEnvironment -eq "HOTFIX") -and (($Environment -eq 'INT') -or ($Environment -eq 'QA') -or ($Environment -eq 'UAT')))
-        { $FullDatabaseName = $Database + "_" + $Environment + "_" + $SubEnvironment }
-    elseif ($Environment -eq 'PERF')
+  
+    if  ($Environment -eq 'PERF')
         { $FullDatabaseName = $Database + "_" + $Environment }
     elseif ($Environment -eq 'PROD')
         { $FullDatabaseName = $Database + "_PRD" }
@@ -24,13 +23,13 @@
     $DBServer = Get-tssConnection -Environment $Environment
     if ($DBServer.databases.contains($FullDatabaseName))
     {
-        $tssDB = $DBServer.databases[$FullDatabaseName]
+        $tssDB = $DBServer.databases | Where-Object Name -eq $FullDatabaseName
     }
     else
     {
-        Write-Error -Message "Invalid Environment and Sub-Environment combination." 
+        Write-Error -Message "Invalid Environment and Sub-Environment combination. No database $FullDatabaseName was found" 
     }
 
-    return $tssDB
+    Write-Output $tssDB
 
 }

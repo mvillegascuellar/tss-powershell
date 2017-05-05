@@ -1,7 +1,8 @@
 ﻿function Reset-tssServiceBroker
 {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param (
+    [Validateset('DEV', 'INT', 'QA', 'UAT', 'PERF', 'PROD', 'LOCAL')]
     [parameter(Mandatory=$true)]
     [string] $Environment,
     [parameter(Mandatory=$true)]
@@ -9,37 +10,29 @@
     [switch] $SkipPWB
     )
 
-    $DBServer = Get-tssConnection -Environment $Environment
-    
-    [string]$PLSDB = Get-tssDatabaseName -SQLServer $DBServer -Environment $Environment -SubEnvironment $SubEnvironment -Database PLS
-    if ($PLSDB -eq $null -or $PLSDB.Trim() -eq '') {
-        Write-Error "No es posible conectar a la base de datos PLS"
-        return $null
+    Write-Verbose "Preparando conexión a base de datos PLS"
+    $PLSDB = Get-tssDatabase -Environment $Environment -SubEnvironment $SubEnvironment -Database 'PLS'
+
+    if ($SkipPWB -eq $false){
+        Write-Verbose "Preparando conexión a base de datos PWB"
+        $PWBDB = Get-tssDatabase -Environment $Environment -SubEnvironment $SubEnvironment -Database 'PLSPWB'
     }
     
+    [string]$AlterDBBroker = 'ALTER DATABASE CURRENT SET NEW_BROKER WITH ROLLBACK IMMEDIATE'
+    
+    if ($PSCmdlet.ShouldProcess($PLSDB,"Inicializando Serivice Broker")) {
+        $PLSDB.ExecuteNonQuery($AlterDBBroker) | Out-Null
+    }
+
     if ($SkipPWB -eq $false){
-        [string]$PWBDB = Get-tssDatabaseName -SQLServer $DBServer -Environment $Environment -SubEnvironment $SubEnvironment -Database PLSPWB
-        if ($PWBDB -eq $null -or $PWBDB.Trim() -eq '') {
-            Write-Error "No es posible conectar a la base de datos PWB"
-            return $null
+        if ($PSCmdlet.ShouldProcess($PWBDB,"Inicializando Serivice Broker")) {
+            $PWBDB.ExecuteNonQuery($AlterDBBroker) | Out-Null
         }
     }
-
-    [string]$plssql = "ALTER DATABASE $PLSDB SET NEW_BROKER WITH ROLLBACK IMMEDIATE"
-    [string]$pwbsql = "ALTER DATABASE $PWBDB SET NEW_BROKER WITH ROLLBACK IMMEDIATE"
-
-    Write-Verbose "Inicializando Serivice Broker para PLS"
-    #$PLSDB.parent.ConnectionContext.ExecuteNonQuery($plssql) | Out-Null
-    $DBServer.ConnectionContext.ExecuteNonQuery($plssql) | Out-Null
-    if ($SkipPWB -eq $false){
-        Write-Verbose "Inicializando Serivice Broker para PWB"
-        #$PWBDB.parent.ConnectionContext.ExecuteNonQuery($pwbsql) | Out-Null
-        $DBServer.ConnectionContext.ExecuteNonQuery($pwbsql) | Out-Null
-    }
-
-    $sql = "DELETE FROM $PLSDB.es.ServiceBrokerConversations;"
+        
+    $delsql = "DELETE FROM es.ServiceBrokerConversations;"
     
-    Write-Verbose "Limpiando tabla es.ServiceBrokerConversations"
-    #$PLSDB.parent.ConnectionContext.ExecuteNonQuery($sql) | Out-Null
-    $DBServer.ConnectionContext.ExecuteNonQuery($sql) | Out-Null
+    if ($PSCmdlet.ShouldProcess($PLSDB,"Limpiando tabla es.ServiceBrokerConversations")) {
+        $PLSDB.ExecuteNonQuery($delsql) | Out-Null
+    }
 }
