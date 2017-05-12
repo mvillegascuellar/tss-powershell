@@ -3,12 +3,12 @@
     [CmdletBinding(SupportsShouldProcess)]
     param (
     [parameter(Mandatory=$true)]
-    [Validateset('DEV', 'INT', 'QA', 'UAT', 'PERF', 'PROD', 'LOCAL')]
+    [Validateset('DEV', 'INT', 'QA', 'UAT', 'PERF', 'PROD', 'LOCAL', 'DBA')]
     [string]$SourceEnvironment,
     [parameter(Mandatory=$true)]
     [string]$SourceSubEnvironment,
     [parameter(Mandatory=$true)]
-    [Validateset('DEV', 'INT', 'QA', 'UAT', 'PERF', 'PROD', 'LOCAL')]
+    [Validateset('DEV', 'INT', 'QA', 'UAT', 'PERF', 'PROD', 'LOCAL', 'DBA')]
     [string]$TargetEnvironment,
     [parameter(Mandatory=$true)]
     [string]$TargetSubEnvironment,
