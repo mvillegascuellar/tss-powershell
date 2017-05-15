@@ -32,89 +32,10 @@
     # $sourceassemblies = $SourcePWBDB.Assemblies | Where-Object {$_.isSystemObject -eq $false -and $_.name -like "PCMiler*"}
     $sourceassemblies = 'PcMilerCLR' ,'PcMilerCLR.XmlSerializers' 
 
-    #region Create Fx Scripts
-
-    # =============================================
-    # Create script for the PLS PCMiler Fuctions
-    # =============================================
-    [string] $PLSPCMilerFxs = "CREATE FUNCTION [dbo].[PCMMiles](@zip1 [nvarchar](4000), @zip2 [nvarchar](4000))
-    RETURNS [nvarchar](4000) WITH EXECUTE AS CALLER
-    AS 
-    EXTERNAL NAME [PcMilerCLR].[UserDefinedFunctions].[PCMMiles]
-    GO
-    EXEC sys.sp_addextendedproperty @name=N'AutoDeployed', @value=N'yes' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'FUNCTION',@level1name=N'PCMMiles'
-    GO
-    EXEC sys.sp_addextendedproperty @name=N'SqlAssemblyFile', @value=N'PcMiler.cs' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'FUNCTION',@level1name=N'PCMMiles'
-    GO
-    EXEC sys.sp_addextendedproperty @name=N'SqlAssemblyFileLine', @value=11 , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'FUNCTION',@level1name=N'PCMMiles'
-    GO
-    IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[PCMDriverTime]') AND type in (N'FN', N'IF', N'TF', N'FS', N'FT'))
-    DROP FUNCTION [dbo].[PCMDriverTime]
-    GO
-    CREATE FUNCTION [dbo].[PCMDriverTime](@zip1 [nvarchar](4000), @zip2 [nvarchar](4000))
-    RETURNS [nvarchar](4000) WITH EXECUTE AS CALLER
-    AS 
-    EXTERNAL NAME [PcMilerCLR].[UserDefinedFunctions].[PCMDriverTime]
-    GO
-    "
-
-    # =============================================
-    # Create script for the PWB PCMiler Fuctions
-    # =============================================
-    [string] $PWBPCMilerFxs = "CREATE FUNCTION [dbo].[PCMMiles](@zip1 [nvarchar](4000), @zip2 [nvarchar](4000))
-    RETURNS [nvarchar](4000) WITH EXECUTE AS CALLER
-    AS 
-    EXTERNAL NAME [PcMilerCLR].[UserDefinedFunctions].[PCMMiles]
-    GO
-    EXEC sys.sp_addextendedproperty @name=N'AutoDeployed', @value=N'yes' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'FUNCTION',@level1name=N'PCMMiles'
-    GO
-    EXEC sys.sp_addextendedproperty @name=N'SqlAssemblyFile', @value=N'PcMiler.cs' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'FUNCTION',@level1name=N'PCMMiles'
-    GO
-    EXEC sys.sp_addextendedproperty @name=N'SqlAssemblyFileLine', @value=11 , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'FUNCTION',@level1name=N'PCMMiles'
-    GO
-    IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[PCMDriverTime]') AND type in (N'FN', N'IF', N'TF', N'FS', N'FT'))
-    DROP FUNCTION [dbo].[PCMDriverTime]
-    GO
-    CREATE FUNCTION [dbo].[PCMDriverTime](@zip1 [nvarchar](4000), @zip2 [nvarchar](4000))
-    RETURNS [nvarchar](4000) WITH EXECUTE AS CALLER
-    AS 
-    EXTERNAL NAME [PcMilerCLR].[UserDefinedFunctions].[PCMDriverTime]
-    GO
-    CREATE FUNCTION [dbo].[PCMZipCode](@cityst [nvarchar](4000))
-    RETURNS [nvarchar](4000) WITH EXECUTE AS CALLER
-    AS 
-    EXTERNAL NAME [PcMilerCLR].[UserDefinedFunctions].[PCMZipCode]
-    GO
-    EXEC sys.sp_addextendedproperty @name=N'AutoDeployed', @value=N'yes' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'FUNCTION',@level1name=N'PCMZipCode'
-    GO
-    EXEC sys.sp_addextendedproperty @name=N'SqlAssemblyFile', @value=N'PcMiler.cs' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'FUNCTION',@level1name=N'PCMZipCode'
-    GO
-    EXEC sys.sp_addextendedproperty @name=N'SqlAssemblyFileLine', @value=35 , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'FUNCTION',@level1name=N'PCMZipCode'
-    GO
-    /****** Object:  UserDefinedFunction [dbo].[PCMCityState]    Script Date: 12/14/2010 13:24:36 ******/
-    CREATE FUNCTION [dbo].[PCMCityState](@zip [nvarchar](4000))
-    RETURNS [nvarchar](4000) WITH EXECUTE AS CALLER
-    AS 
-    EXTERNAL NAME [PcMilerCLR].[UserDefinedFunctions].[PCMCityState]
-    GO
-    EXEC sys.sp_addextendedproperty @name=N'AutoDeployed', @value=N'yes' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'FUNCTION',@level1name=N'PCMCityState'
-    GO
-    EXEC sys.sp_addextendedproperty @name=N'SqlAssemblyFile', @value=N'PcMiler.cs' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'FUNCTION',@level1name=N'PCMCityState'
-    GO
-    EXEC sys.sp_addextendedproperty @name=N'SqlAssemblyFileLine', @value=23 , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'FUNCTION',@level1name=N'PCMCityState'
-    GO
-    CREATE FUNCTION [dbo].[PCMSearchLocations](@zipCode [nvarchar](4000), @cityState [nvarchar](4000), @searchMode [int])
-    RETURNS [nvarchar](4000) WITH EXECUTE AS CALLER
-    AS 
-    EXTERNAL NAME [PcMilerCLR].[UserDefinedFunctions].[PCMSearchLocations]
-    GO
-    CREATE FUNCTION [dbo].[PCMIsValidLocation](@zipCode [nvarchar](4000), @cityState [nvarchar](4000))
-    RETURNS [bit] WITH EXECUTE AS CALLER
-    AS 
-    EXTERNAL NAME [PcMilerCLR].[UserDefinedFunctions].[PCMIsValidLocation]
-    GO
-    "
-    #endregion
+    
+    $tsstoolspath = Split-Path -Path ((Get-Module -ListAvailable tsstools).path) -Parent
+    $ScriptCreateFxPLS = Join-Path -Path $tsstoolspath -ChildPath "sqlscripts\xpo.pls_create_pcmiler_functions.sql"
+    $ScriptCreateFxPWB = Join-Path -Path $tsstoolspath -ChildPath "sqlscripts\xpo.pwb_create_pcmiler_functions.sql"
 
 
     Write-Verbose "Iniciando verificación de configuraciones de base de datos"
@@ -221,12 +142,22 @@
     }
         
     if ($PSCmdlet.ShouldProcess($DestPLSDB,"Creando funciones para PLS")) {
-        Invoke-Sqlcmd -ServerInstance $DestPLSDB.parent.name -Database $DestPLSDB.name -Query $PLSPCMilerFxs
+        if (Test-Path -Path $ScriptCreateFxPLS) {
+            Invoke-Sqlcmd -ServerInstance $DestPLSDB.parent.name -Database $DestPLSDB.name -InputFile $ScriptCreateFxPLS
+        }
+        else {
+            Write-Warning "No se encontro el script de creación de funciones PCMiler para PLS"
+        }
     }
     
     if ($SkipPWB -eq $false) {
         if ($PSCmdlet.ShouldProcess($DestPWBDB,"Creando funciones para PWB")) {
-            Invoke-Sqlcmd -ServerInstance $DestPWBDB.parent.name -Database $DestPWBDB.name -Query $PWBPCMilerFxs
+            if (Test-Path -Path $ScriptCreateFxPWB) {
+                Invoke-Sqlcmd -ServerInstance $DestPWBDB.parent.name -Database $DestPWBDB.name -InputFile $ScriptCreateFxPWB
+            }
+            else {
+                Write-Warning "No se encontro el script de creación de funciones PCMiler para PWB"
+            }
         }
     }
     
