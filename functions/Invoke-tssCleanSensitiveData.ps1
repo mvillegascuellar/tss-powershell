@@ -9,7 +9,7 @@
     $ScriptCleanData = Join-Path -Path $tsstoolspath -ChildPath "sqlscripts\xpo.clean_sensitive_data.sql"
     if (Test-Path -Path $ScriptCleanData) {
         if ($PSCmdlet.ShouldProcess($PLSDatabase,"Ejecutando script de limpieza de data sensible")) {
-            Invoke-Sqlcmd -ServerInstance $PLSDatabase.parent.name -Database $PLSDatabase.name -InputFile $ScriptCleanData
+            Invoke-Sqlcmd -ServerInstance $PLSDatabase.parent.name -Database $PLSDatabase.name -InputFile $ScriptCleanData -QueryTimeout 0
         }
     }
     else {
