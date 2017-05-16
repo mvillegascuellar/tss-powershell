@@ -41,7 +41,7 @@
             }
 
         }
-        elseif ($DBType -eq 'PWB') {
+        elseif ($DBType -eq 'PLSPWB') {
             $PWBDB = Get-tssDatabase -Environment $Environment -SubEnvironment $SubEnvironment -Database $DBType
             $PWBDB.Parent.ConnectionContext.StatementTimeout = 0
 
