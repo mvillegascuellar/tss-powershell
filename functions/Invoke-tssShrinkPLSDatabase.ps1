@@ -10,6 +10,11 @@
 					            BaseDatos = $PLSDatabase.name
 				                }
 
+    if ($PSCmdlet.ShouldProcess($PLSDatabase,"Reducción Inicial del Log de Transacciones")) {
+        $PLSDatabase.Checkpoint()
+        $PLSDatabase.LogFiles[0].Shrink(0, [Microsoft.SqlServer.Management.Smo.ShrinkMethod]::TruncateOnly)
+    }
+
     if ($PLSDatabase.FileGroups["PRIMARY"].Files.Contains("PLS_Data5")){
         if ($PSCmdlet.ShouldProcess($PLSDatabase,"Compactando y Removiendo Datafile PLS_Data5")) {
             $Startdate = get-date
@@ -62,9 +67,9 @@
         }
     }
 
-    if ($PSCmdlet.ShouldProcess($PLSDatabase,"Reduciendo el Log de Transacciones")) {
-        $PLSDB.Checkpoint()
-        $PLSDB.LogFiles[0].Shrink(0, [Microsoft.SqlServer.Management.Smo.ShrinkMethod]::TruncateOnly)
+    if ($PSCmdlet.ShouldProcess($PLSDatabase,"Reducción Final del Log de Transacciones")) {
+        $PLSDatabase.Checkpoint()
+        $PLSDatabase.LogFiles[0].Shrink(0, [Microsoft.SqlServer.Management.Smo.ShrinkMethod]::TruncateOnly)
     }
 
     Write-Output $ResultObj

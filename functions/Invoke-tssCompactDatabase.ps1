@@ -29,19 +29,39 @@
                 Invoke-tssShrinkPLSDatabase -PLSDatabase $PLSDB
             }
             catch {
-                Write-Verbose "Error esperado por falta de espacio y achicando log"
-                $PLSDB.Checkpoint()
-                $PLSDB.LogFiles[0].Shrink(0, [Microsoft.SqlServer.Management.Smo.ShrinkMethod]::TruncateOnly)
-                Write-Verbose "Intentando compactar la base de datos"
+                Write-Verbose "Intentando compactar la base de datos - Segundo Intento"
                 Invoke-tssShrinkPLSDatabase -PLSDatabase $PLSDB
             }
 
             Write-Verbose "Ejecutando limpieza de data sensible"
             Invoke-tssCleanSensitiveData -PLSDatabase $PLSDB
-            
-        }
-    }
 
-}
+            if ($PSCmdlet.ShouldProcess($PLSDB,"Generando copia de seguridad de base de datos")) {
+                Backup-DbaDatabase -SqlInstance $PLSDB.parent.name -Type Full -CompressBackup -Checksum -DatabaseCollection $PLSDB.name
+            }
+
+        }
+        elseif ($DBType -eq 'PWB') {
+            $PWBDB = Get-tssDatabase -Environment $Environment -SubEnvironment $SubEnvironment -Database $DBType
+            $PWBDB.Parent.ConnectionContext.StatementTimeout = 0
+
+            Write-Verbose "Intentando cambiar el modelo de recuperación a simple"
+            Set-tssDatabaseRecoveryModel -SqlDatabase $PWBDB -RecoveryModel Simple
+
+            Write-Verbose "Intentando truncar las tablas no importantes"
+            Clear-tssPWBNotImportantTables -SqlDatabase $PWBDB
+
+            Write-Verbose "Intentando compactar la base de datos"
+            Invoke-tssShrinkPWBDatabase -PWBDatabase $PWBDB
+
+            if ($PSCmdlet.ShouldProcess($PWBDB,"Generando copia de seguridad de base de datos")) {
+                Backup-DbaDatabase -SqlInstance $PWBDB.parent.name -Type Full -CompressBackup -Checksum -DatabaseCollection $PWBDB.name
+            }
+
+        } #end elseif para tipo de base de datos
+
+    } #end process
+
+} #end function
 
 #Invoke-tssCompactDatabase -Environment DEV -SubEnvironment PRD_OLD -DBType PLS -WhatIf
