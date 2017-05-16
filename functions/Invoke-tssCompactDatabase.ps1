@@ -9,7 +9,7 @@
         [string] $SubEnvironment,
 
         [parameter(Mandatory=$true)]
-        [Validateset('PLS','PWB')]
+        [Validateset('PLS','PLSPWB')]
         [string] $DBType
     )
 
