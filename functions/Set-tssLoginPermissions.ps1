@@ -12,7 +12,7 @@
     Write-Verbose "Preparando conexión a la base de datos PLS"
     $PLSDB = Get-tssDatabase -Environment $Environment -SubEnvironment $SubEnvironment -Database PLS
     
-
+    [string]$AnalystsGroup = 'TSS\TSI.RO.analysts'
     if ($SkipPWB -eq $false) {
         Write-Verbose "Preparando conexión a la base de datos PWB"
         $PWBDB = Get-tssDatabase -Environment $Environment -SubEnvironment $SubEnvironment -Database PLSPWB
@@ -53,6 +53,17 @@
                 $PLSDB.Roles['db_datawriter'].AddMember($login)
                 if ($Environment -eq 'DEV'){
                     $PLSDB.Roles['db_owner'].AddMember($login)
+                }
+            }
+
+            if ($Environment -eq 'DEV'){
+                if ($PSCmdlet.ShouldProcess($PLSDB,"Asociando al grupo de analistas como db_owner")) {
+                    if ($PLSDB.Users.Contains($AnalystsGroup) -eq $false){
+                        $Newuser = New-Object ('Microsoft.SqlServer.Management.Smo.User') ($PLSDB, $AnalystsGroup)
+                        $Newuser.login = $AnalystsGroup
+                        $Newuser.create()
+                    }
+                    $PLSDB.Roles['db_owner'].AddMember($AnalystsGroup)
                 }
             }
 
@@ -99,6 +110,17 @@
                     $permission = New-Object -typeName Microsoft.SqlServer.Management.Smo.ObjectPermissionSet
                     $permission.Execute = $true
                     $PWBDB.Schemas['dbo'].Grant($permission,$login)
+                }
+
+                if ($Environment -eq 'DEV'){
+                    if ($PSCmdlet.ShouldProcess($PWBDB,"Asociando al grupo de analistas como db_owner")) {
+                        if ($PWBDB.Users.Contains($AnalystsGroup) -eq $false){
+                            $Newuser = New-Object ('Microsoft.SqlServer.Management.Smo.User') ($PWBDB, $AnalystsGroup)
+                            $Newuser.login = $AnalystsGroup
+                            $Newuser.create()
+                        }
+                        $PWBDB.Roles['db_owner'].AddMember($AnalystsGroup)
+                    }
                 }
             }
         }
