@@ -9,39 +9,86 @@
         [string] $SubEnvironment,
 
         [parameter(Mandatory=$true)]
-        [Validateset('PLS','PWB')]
+        [Validateset('PLS','PLSPWB')]
         [string] $DBType
     )
 
-    process {
-        if ($DBType -eq 'PLS') {
-            $PLSDB = Get-tssDatabase -Environment $Environment -SubEnvironment $SubEnvironment -Database $DBType
-            $PLSDB.Parent.ConnectionContext.StatementTimeout = 0
-            
-            Write-Verbose "Intentando cambiar el modelo de recuperación a simple"
-            Set-tssDatabaseRecoveryModel -SqlDatabase $PLSDB -RecoveryModel Simple
-
-            Write-Verbose "Intentando truncar las tablas no importantes"
-            Clear-tssPLSNotImportantTables -SqlDatabase $PLSDB
-
-            Write-Verbose "Intentando compactar la base de datos"
-            try {
-                Invoke-tssShrinkPLSDatabase -PLSDatabase $PLSDB
-            }
-            catch {
-                Write-Verbose "Error esperado por falta de espacio y achicando log"
-                $PLSDB.Checkpoint()
-                $PLSDB.LogFiles[0].Shrink(0, [Microsoft.SqlServer.Management.Smo.ShrinkMethod]::TruncateOnly)
-                Write-Verbose "Intentando compactar la base de datos"
-                Invoke-tssShrinkPLSDatabase -PLSDatabase $PLSDB
-            }
-
-            Write-Verbose "Ejecutando limpieza de data sensible"
-            Invoke-tssCleanSensitiveData -PLSDatabase $PLSDB
-            
-        }
+    begin {
+        $SqlDatabase = Get-tssDatabase -Environment $Environment -SubEnvironment $SubEnvironment -Database $DBType
+        $SqlDatabase.Parent.ConnectionContext.StatementTimeout = 0
+        
+        $ResultObj = [pscustomobject]@{
+					                  Ambiente = $Environment
+					                  SubAmbiente = $SubEnvironment
+                                      Instancia = $SqlDatabase.parent.name
+                                      BaseDatos = $SqlDatabase.name
+				                      }
+        
     }
 
-}
+    process {
+
+        $GeneralStartDate = Get-Date
+
+        if ($PSCmdlet.ShouldProcess($SqlDatabase,"Cambiando el modelo de recuperación a Simple")) {
+            $RecObject = Set-tssDatabaseRecoveryModel -SqlDatabase $SqlDatabase -RecoveryModel Simple
+            $ResultObj | Add-Member -Name "CambioModeloRecuperacionRealizado" -Value $RecObject.CambioRealizado -MemberType NoteProperty
+            if ($RecObject.CambioRealizado) {
+                $ResultObj | Add-Member -Name "DuracionCambioModeloRecuperacion" -Value $RecObject.DuracionCambioModeloRecuperacion -MemberType NoteProperty
+            }
+        }
+
+        if ($PSCmdlet.ShouldProcess($SqlDatabase,"Truncando las tablas no importantes")) {
+            $TruncObj = Invoke-tssTruncateNotImportantTables -SqlDatabase $SqlDatabase -DBType $DBType
+            $ResultObj | Add-Member -Name "DuracionTruncateTablasNoImportantes" -Value $TruncObj.DuracionTruncateTablasNoImportantes -MemberType NoteProperty
+        }
+
+        if ($DBType -eq 'PLS') {
+            if ($PSCmdlet.ShouldProcess($SqlDatabase,"Limpieza de Data Sensible")) {
+                $CleanDataObj = Invoke-tssCleanSensitiveData -PLSDatabase $SqlDatabase
+                $ResultObj | Add-Member -Name "ScriptLimpieza" -Value $CleanDataObj.ScriptLimpieza -MemberType NoteProperty
+                $ResultObj | Add-Member -Name "DuracionLimpiezaDataSensible" -Value $CleanDataObj.DuracionLimpiezaDataSensible -MemberType NoteProperty
+            }
+        }
+        
+        if ($PSCmdlet.ShouldProcess($SqlDatabase,"Compactando la base de datos")) {
+            try {
+                $ShrinkObj = Invoke-tssShrinkDatabase -SqlDatabase $SqlDatabase -DBType $DBType
+            }
+            catch {
+                Write-Verbose "Error Esperado - Segundo Intento de compactar la base de datos"
+                $ShrinkObj = Invoke-tssShrinkDatabase -SqlDatabase $SqlDatabase -DBType $DBType
+            }
+
+            $ShrinkProps = Get-Member -InputObject $ShrinkObj -MemberType NoteProperty
+            foreach($ShrinkProp in $ShrinkProps) {
+                if ($ShrinkProp.name -notin ('Instancia','BaseDatos')) {
+                    $propValue = $ShrinkObj | Select-Object -ExpandProperty $ShrinkProp.Name
+                    $ResultObj | Add-Member -Name $ShrinkProp.Name -Value $propValue -MemberType NoteProperty
+                }
+            }
+        }
+
+        if ($PSCmdlet.ShouldProcess($SqlDatabase,"Generando copia de seguridad de base de datos")) {
+            $Startdate = Get-Date
+            $backupObj = Backup-DbaDatabase -SqlInstance $SqlDatabase.parent.name -Type Database -CompressBackup -Checksum -Databases $SqlDatabase.name
+            $Enddate = Get-Date
+            $duracion = "{0:G}" -f (New-TimeSpan -Start $Startdate -End $EndDate)
+            $ResultObj | Add-Member -Name "BackupPath" -Value $backupObj.BackupPath -MemberType NoteProperty
+            $ResultObj | Add-Member -Name "DuracionBackup" -Value $duracion -MemberType NoteProperty
+        }
+
+        $GeneralEndDate = Get-Date
+        $GeneralDuration = "{0:G}" -f (New-TimeSpan -Start $GeneralStartDate -End $GeneralEndDate)
+        $ResultObj | Add-Member -Name "InicioProceso" -Value $GeneralStartDate -MemberType NoteProperty
+        $ResultObj | Add-Member -Name "FinProceso" -Value $GeneralEndDate -MemberType NoteProperty
+        $ResultObj | Add-Member -Name "DuracionProcesoCompleto" -Value $GeneralDuration -MemberType NoteProperty
+
+        Write-Output $ResultObj
+        
+
+    } #end process
+
+} #end function
 
 #Invoke-tssCompactDatabase -Environment DEV -SubEnvironment PRD_OLD -DBType PLS -WhatIf
