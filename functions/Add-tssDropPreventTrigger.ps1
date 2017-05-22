@@ -1,4 +1,30 @@
-﻿function Add-tssDropPreventTrigger {
+﻿<#
+.SYNOPSIS
+Permite agregar el trigger que protege a las bases de datos de eliminaciones y creaciones de objetos por parte de los programadores.
+
+.DESCRIPTION
+Agrega un trigger a nivel de base de datos que evita la creaciónn y eliminación de objetos por parte del usuario "tssuser", el cual
+es utilizado por los programadores. Este trigger normalmente solo debe estar presente en las bases de datos de desarrollo.
+
+.PARAMETER TSSDatabase
+Objeto de tipo Database al cual se le agregara el trigger. Pertenece al Parameter Set "FromInnerFx".
+
+.PARAMETER Environment
+Ambiente donde se encuentra la base de datos a la cual se agregara el trigger.  Pertenece al Parameter Set "Direct".
+
+.PARAMETER SubEnvironment
+Sub-Ambiente donde se encuentra la base de datos a la cual se agregara el trigger.  Pertenece al Parameter Set "Direct".
+
+.PARAMETER DBType
+Tipo de base de datos a la cual se agregara el trigger, sólo acepta valores PLS y PWB.  Pertenece al Parameter Set "Direct".
+
+.EXAMPLE
+An example
+
+.NOTES
+General notes
+#>
+function Add-tssDropPreventTrigger {
     [CmdletBinding(SupportsShouldProcess)]
     param (
         [parameter(Mandatory=$true, ParameterSetName=”FromInnerFx", Position=0)]
