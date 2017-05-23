@@ -13,7 +13,9 @@
     [string]$TargetEnvironment,
 
     [parameter(Mandatory = $true)]
-    [string]$TargetSubEnvironment
+    [string]$TargetSubEnvironment,
+    
+    [string]$NewParentDB
   )
 
   Write-Verbose "Preparando conexión a base de datos PLS Origen"
@@ -24,11 +26,19 @@
   Write-Verbose "*** Inicio de copia de Sinonimos ***"
   foreach ($Synonym in $SourcePLSDB.Synonyms) {
     $synonymName = $Synonym.name
-    if ($PSCmdlet.ShouldProcess($TargetPLSDB,"Copiando sinonimo $synonymName")) {
-        if ($TargetPLSDB.Synonyms.contains($synonymName)) {
-          $TargetPLSDB.Synonyms[$synonymName].drop()
-        }
-        $TargetPLSDB.ExecuteNonQuery($Synonym.script()) 
+    if ($PSCmdlet.ShouldProcess($TargetPLSDB, "Copiando sinonimo $synonymName")) {
+      if ($TargetPLSDB.Synonyms.contains($synonymName)) {
+        $TargetPLSDB.Synonyms[$synonymName].drop()
+      }
+      $SynScript = $Synonym.script()
+      if ($NewParentDB.Length -gt 0 -and $Synonym.BaseDatabase -ne $SourcePLSDB.name ) {
+        $CurrDBName = $Synonym.BaseDatabase   
+        $SynScript = $SynScript.Replace($CurrDBName, $NewParentDB)
+      }
+      elseif ($Synonym.BaseDatabase -eq $SourcePLSDB.name) {
+        $SynScript = $SynScript.Replace($SourcePLSDB.name, $TargetPLSDB.name)
+      }
+      $TargetPLSDB.ExecuteNonQuery($SynScript) 
     }
   }
   Write-Verbose "*** Fin de copia de Sinonimos ***"
