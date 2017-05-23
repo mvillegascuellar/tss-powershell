@@ -1,21 +1,30 @@
-﻿function Copy-tssPLSApplicationSettings{
-    [CmdletBinding(SupportsShouldProcess)]
-    param (
-        [parameter(Mandatory=$true)]
-        [Validateset('DEV', 'INT', 'QA', 'UAT', 'PERF', 'PROD', 'LOCAL', 'DBA')]
-        [string]$Environment,
-        [parameter(Mandatory=$true)]
-        [string]$SourceSubEnvironment,
-        [parameter(Mandatory=$true)]
-        [string]$DestSubEnvironment
-    )
+﻿function Copy-tssPLSApplicationSettings {
+  [CmdletBinding(SupportsShouldProcess)]
+  param (
+    [parameter(Mandatory = $true )]
+    [Validateset('DEV', 'INT', 'QA', 'UAT', 'PERF', 'PROD', 'LOCAL', 'DBA')]
+    [string]$Environment,
+        
+    [parameter(Mandatory = $true, ParameterSetName = "FromAnotherPLSDB")]
+    [string]$SourceSubEnvironment,
 
-    Write-Verbose "Preparando conexión a Origen"
-    $SourcePLSDB = Get-tssDatabase -Environment $Environment -SubEnvironment $SourceSubEnvironment -Database PLS
+    [parameter(Mandatory = $true, ParameterSetName = "FromPLSKeepSafe")]
+    [switch]$UsePLSKeepSafe,
 
-    Write-Verbose "Preparando conexión a Destino"
-    $TargetPLSDB = Get-tssDatabase -Environment $Environment -SubEnvironment $DestSubEnvironment -Database PLS
-    
+    [parameter(Mandatory = $true)]
+    [string]$DestSubEnvironment
+  )
+
+  Write-Verbose "Preparando conexión a Destino"
+  $TargetPLSDB = Get-tssDatabase -Environment $Environment -SubEnvironment $DestSubEnvironment -Database PLS
+
+  Write-Verbose "Preparando conexión a Origen"
+  if ($PSCmdlet.ParameterSetName -eq "FromAnotherPLSDB") {
+    $SourcePLSDB = Get-tssDatabase -Environment $Environment -SubEnvironment $SourceSubEnvironment -Database PLS  
+  }
+  elseif ($PSCmdlet.ParameterSetName -eq "FromPLSKeepSafe" -and $UsePLSKeepSafe) {
+    $SourcePLSDB = Get-DbaDatabase -SqlInstance $TargetPLSDB.parent -Databases 'PLSKeepSafe'
+  }
 
   [string] $sqlCopyAppSettings = "declare @t_configurations TABLE
                                     (GroupName varchar(50)
@@ -55,8 +64,8 @@
 	                                    WHERE a.GroupName = c.GroupName
 	                                    AND a.Name = c.Name)"
  
-
-    if ($PSCmdlet.ShouldProcess($TargetPLSDB,"Copiando Application Settings")) {
-        $TargetPLSDB.ExecuteNonQuery($sqlCopyAppSettings)
-    }
+  
+  if ($PSCmdlet.ShouldProcess($TargetPLSDB, "Copiando Application Settings desde $SourcePLSDB")) {
+    $TargetPLSDB.ExecuteNonQuery($sqlCopyAppSettings)
+  }
 }

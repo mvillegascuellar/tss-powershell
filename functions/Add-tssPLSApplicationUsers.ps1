@@ -8,7 +8,7 @@ function Add-tssPLSApplicationUsers {
         [string]$SubEnvironment
     )
 
-    Write-Verbose "Preparando conexión a la base de datos"
+    Write-Verbose "Preparando conexiÃ³n a la base de datos"
     $PLSDB = Get-tssDatabase -Environment $Environment -SubEnvironment $SubEnvironment -Database PLS
    
     Write-Verbose "Preparando los usuarios a insertar"
