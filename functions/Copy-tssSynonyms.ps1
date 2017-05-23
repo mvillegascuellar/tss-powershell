@@ -8,7 +8,6 @@
     [parameter(Mandatory = $true)]
     [string]$SourceSubEnvironment,    
 
-    [parameter(Mandatory = $true)]
     [Validateset('DEV', 'INT', 'QA', 'UAT', 'PERF', 'PROD', 'LOCAL', 'DBA')]
     [string]$TargetEnvironment,
 
@@ -17,6 +16,15 @@
     
     [string]$NewParentDB
   )
+
+  if ($TargetEnvironment.Length -eq 0) {
+    $TargetEnvironment = $SourceEnvironment
+  }
+
+  if ($TargetEnvironment -eq $SourceEnvironment -and $TargetSubEnvironment -eq $SourceSubEnvironment) {
+    Write-Error -Message "El Origen y Destino no pueden ser el mismo."
+    break
+  }
 
   Write-Verbose "Preparando conexión a base de datos PLS Origen"
   $SourcePLSDB = Get-tssDatabase -Environment $SourceEnvironment -SubEnvironment $SourceSubEnvironment -Database 'PLS'
