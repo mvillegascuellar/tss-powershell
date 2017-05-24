@@ -23,7 +23,7 @@ function Copy-tssTable {
     $TargetDB = $SourceDB
   }
  
-  If ($DestTable.Length –eq 0) { 
+  If ($DestTable.Length -eq 0) { 
     $DestTable = $SrcTable 
   } 
 
