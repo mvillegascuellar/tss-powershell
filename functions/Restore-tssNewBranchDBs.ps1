@@ -19,19 +19,17 @@ function Restore-tssNewBranchDBs {
   foreach ($DevDB in $DevDBs) {
     $Dev1DB = $DevDB + '_DEV1'
     $UATNewDB = $DevDB + '_UAT_NEW'
-    $BackupPath = $MainBackupPath + $Dev1DB
+    $BackupPath = Join-Path -Path $MainBackupPath -ChildPath $Dev1DB
+    
+    if (-not (Test-Path -Path $BackupPath)) {
+      Write-Error -Message "The backup path does not exists"
+      return
+    }
 
     if ($PSCmdlet.ShouldProcess($DBServer, "Restaurando base de datos $UATNewDB")) {
       try {
         if ($DevDB -eq 'PLS_DEV') {  
-          $PLSDriveMostFree = Get-DbaDiskSpace -ComputerName $DBServer | Sort-Object -Property FreeInGB -Descending | Select-Object -First 4
-          $FileStructure = @{
-            'PLS'       = "$($PLSDriveMostFree[0].Name)mssql\Data\$($DBFilePrefix)PLS_DEV_DEV1.mdf"
-            'PLS_Data4' = "$($PLSDriveMostFree[1].Name)mssql\Data\$($DBFilePrefix)PLS_DEV_DEV1_4.ndf"
-            'PLS_Index' = "$($PLSDriveMostFree[2].Name)mssql\Data\$($DBFilePrefix)PLS_DEV_DEV1_index.ndf"
-            'PLSCDC'    = "$($PLSDriveMostFree[3].Name)mssql\Data\$($DBFilePrefix)PLS_DEV_DEV1_cdc.ndf"
-            'PLS_log'   = "$($PLSDriveMostFree[3].Name)mssql\Data\$($DBFilePrefix)PLS_DEV_DEV1_log.ldf"
-          }
+          $FileStructure = Get-tssPLSDevDBFileDistribution -DBServer $DBServer -DBFilePrefix $DBFilePrefix
           Restore-DbaDatabase -SqlServer $DBServer -Path $BackupPath `
             -MaintenanceSolutionBackup -DatabaseName $UATNewDB -FileMapping $FileStructure
         }
