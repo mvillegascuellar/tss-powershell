@@ -45,6 +45,7 @@ function Add-tssPLSApplicationUsers {
   $Developers.Add('omar.polo') | Out-Null
   $Developers.Add('viacheslav.guevara') | Out-Null
   $Developers.Add('cwheetley') | Out-Null
+  $Developers.Add('dchapman') | Out-Null
 
   # llenando el arreglo de $QAs
   $QAs.Add('ambika.siddaiah') | Out-Null
