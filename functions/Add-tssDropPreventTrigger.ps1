@@ -31,14 +31,14 @@ function Add-tssDropPreventTrigger {
     [object] $TSSDatabase,
 
     [parameter(Mandatory = $true, ParameterSetName = ”Direct", Position = 0)]
-    [Validateset('DEV', 'INT', 'QA', 'UAT', 'PERF', 'PROD', 'LOCAL', 'DBA')]
+    [Validateset('DEV', 'DEVXPO', 'INT', 'QA', 'UAT', 'PERF', 'PROD', 'LOCAL', 'DBA')]
     [string] $Environment,
 
     [parameter(Mandatory = $true, ParameterSetName = ”Direct", Position = 1)]
     [string[]] $SubEnvironments,
 
     [parameter(Mandatory = $true, ParameterSetName = ”Direct", Position = 2)]
-    [Validateset('PLS', 'PLSPWB', 'All')]
+    [Validateset('PLS', 'PLSPWB', 'PLSWEB', 'PLS_AUDIT', 'PLSCONFIG', 'PLSEDI', 'All')]
     [string] $DBType = 'All'
   )
 
@@ -52,7 +52,7 @@ function Add-tssDropPreventTrigger {
   if ($PSCmdlet.ParameterSetName -eq "Direct") {
     foreach ($SubEnvironment in $SubEnvironments) {
       if ($DBType -eq 'All') {
-        $tssDBTypes = 'PLS', 'PLSPWB'
+        $tssDBTypes = 'PLS', 'PLSPWB', 'PLSWEB', 'PLS_AUDIT', 'PLSCONFIG', 'PLSEDI'
       }
       else {
         $tssDBTypes = $DBType
@@ -61,14 +61,22 @@ function Add-tssDropPreventTrigger {
       foreach ($tssDBType in $tssDBTypes) {
         $TSSDatabase = Get-tssDatabase -Environment $Environment -SubEnvironment $SubEnvironment -Database $tssDBType
         if ($PSCmdlet.ShouldProcess($TSSDatabase, "Creando trigger para evitar operaciones DDL")) {
-          Invoke-Sqlcmd -ServerInstance $TSSDatabase.parent.name -Database $TSSDatabase.name -InputFile $ScriptDBTrigger -QueryTimeout 0
+          if ($TSSDatabase.triggers.Contains("disableDrop")) {
+            $TSSDatabase.triggers["disableDrop"].Drop()
+          }
+          Invoke-Sqlcmd2 -ServerInstance $TSSDatabase.parent.name -Database $TSSDatabase.name -InputFile $ScriptDBTrigger -QueryTimeout 0
+          $TSSDatabase.ExecuteNonQuery("ENABLE TRIGGER [disableDrop] ON DATABASE") | Out-Null
         }
       } # End foreach DBTypes
     } # End foreach subenvironments
   } # End If parameter Set "Direct"
   elseif ($PSCmdlet.ParameterSetName -eq "FromInnerFx") {
     if ($PSCmdlet.ShouldProcess($TSSDatabase, "Creando trigger para evitar operaciones DDL")) {
-      Invoke-Sqlcmd -ServerInstance $TSSDatabase.parent.name -Database $TSSDatabase.name -InputFile $ScriptDBTrigger -QueryTimeout 0
+      if ($TSSDatabase.triggers.Contains("disableDrop")) {
+        $TSSDatabase.triggers["disableDrop"].Drop()
+      }
+      Invoke-Sqlcmd2 -ServerInstance $TSSDatabase.parent.name -Database $TSSDatabase.name -InputFile $ScriptDBTrigger -QueryTimeout 0 
+      $TSSDatabase.ExecuteNonQuery("ENABLE TRIGGER [disableDrop] ON DATABASE") | Out-Null
     }
   }
 

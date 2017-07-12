@@ -1,78 +1,116 @@
 function Add-tssPLSApplicationUsers {
-    [CmdletBinding(SupportsShouldProcess)]
-    param (
-        [parameter(Mandatory=$true)]
-        [Validateset('DEV', 'INT', 'QA', 'UAT', 'PERF', 'PROD', 'LOCAL', 'DBA')]
-        [string]$Environment,
-        [parameter(Mandatory=$true)]
-        [string]$SubEnvironment
-    )
+  [CmdletBinding(SupportsShouldProcess)]
+  param (
+    [parameter(Mandatory = $true)]
+    [Validateset('DEV', 'DEVXPO', 'INT', 'QA', 'UAT', 'PERF', 'PROD', 'LOCAL', 'DBA')]
+    [string]$Environment,
 
-    Write-Verbose "Preparando conexión a la base de datos"
-    $PLSDB = Get-tssDatabase -Environment $Environment -SubEnvironment $SubEnvironment -Database PLS
+    [parameter(Mandatory = $true)]
+    [string]$SubEnvironment,
+
+    [switch]$OutputScriptOnly
+        
+  )
+
+  Write-Verbose "Preparando conexión a la base de datos"
+  $PLSDB = Get-tssDatabase -Environment $Environment -SubEnvironment $SubEnvironment -Database PLS
    
-    Write-Verbose "Preparando los usuarios a insertar"
-    $Developers = New-Object -TypeName System.Collections.ArrayList
-    $QAs = New-Object -TypeName System.Collections.ArrayList
-    $Analysts = New-Object -TypeName System.Collections.ArrayList
+  Write-Verbose "Preparando los usuarios a insertar"
+  $Developers = New-Object -TypeName System.Collections.ArrayList
+  $QAs = New-Object -TypeName System.Collections.ArrayList
+  $Analysts = New-Object -TypeName System.Collections.ArrayList
+  $InfoSys = New-Object -TypeName System.Collections.ArrayList
 
-    # llenando el arreglo de developers
-    $Developers.Add('alanchayan') | Out-Null
-    $Developers.Add('alfredo.mendiola') | Out-Null
-    $Developers.Add('gkilmain') | Out-Null
-    $Developers.Add('alonso.bustos') | Out-Null
-    $Developers.Add('cesar.marchena') | Out-Null
-    $Developers.Add('cristian.ccori') | Out-Null
-    $Developers.Add('cristian.villegas') | Out-Null
-    $Developers.Add('daniel.arias') | Out-Null
-    $Developers.Add('diego.corrada') | Out-Null
-    $Developers.Add('elmer.ramirez') | Out-Null
-    $Developers.Add('ernesto.angeles') | Out-Null
-    $Developers.Add('hector.lopez') | Out-Null
-    $Developers.Add('israel.nizama') | Out-Null
-    $Developers.Add('jorge.garcia') | Out-Null
-    $Developers.Add('jorge.vargas') | Out-Null
-    $Developers.Add('jose.cardenas') | Out-Null
-    $Developers.Add('jose.castillo') | Out-Null
-    $Developers.Add('kiefer.fernandez') | Out-Null
-    $Developers.Add('luis.fuentes') | Out-Null
-    $Developers.Add('nelsson.aguilar') | Out-Null
-    $Developers.Add('omar.polo') | Out-Null
-    $Developers.Add('viacheslav.guevara') | Out-Null
-    $Developers.Add('cwheetley') | Out-Null
+  # llenando el arreglo de developers
+  $Developers.Add('alanchayan') | Out-Null
+  $Developers.Add('alfredo.mendiola') | Out-Null
+  $Developers.Add('gkilmain') | Out-Null
+  $Developers.Add('alonso.bustos') | Out-Null
+  $Developers.Add('cesar.marchena') | Out-Null
+  $Developers.Add('cristian.ccori') | Out-Null
+  $Developers.Add('cristian.villegas') | Out-Null
+  $Developers.Add('daniel.arias') | Out-Null
+  $Developers.Add('diego.corrada') | Out-Null
+  $Developers.Add('elmer.ramirez') | Out-Null
+  $Developers.Add('ernesto.angeles') | Out-Null
+  $Developers.Add('hector.lopez') | Out-Null
+  $Developers.Add('israel.nizama') | Out-Null
+  $Developers.Add('jorge.garcia') | Out-Null
+  $Developers.Add('jorge.vargas') | Out-Null
+  $Developers.Add('jose.cardenas') | Out-Null
+  $Developers.Add('jose.castillo') | Out-Null
+  $Developers.Add('kiefer.fernandez') | Out-Null
+  $Developers.Add('luis.fuentes') | Out-Null
+  $Developers.Add('nelsson.aguilar') | Out-Null
+  $Developers.Add('omar.polo') | Out-Null
+  $Developers.Add('viacheslav.guevara') | Out-Null
+  $Developers.Add('cwheetley') | Out-Null
 
-    # llenando el arreglo de $QAs
-    $QAs.Add('ambika.siddaiah') | Out-Null
-    $QAs.Add('angel.farro') | Out-Null
-    $QAs.Add('betsy.cardama') | Out-Null
-    $QAs.Add('consuelo.lucas') | Out-Null
-    $QAs.Add('edgar.aspiros') | Out-Null
-    $QAs.Add('jaqueline.baca') | Out-Null
-    $QAs.Add('jkdiaz') | Out-Null
-    $QAs.Add('lupe.calero') | Out-Null
-    $QAs.Add('sissi.hidalgo') | Out-Null
-    $QAs.Add('yohana.espinoza') | Out-Null
-    $QAs.Add('Yespinoza') | Out-Null
-    $QAs.Add('Sambu.sathyamoorthy') | Out-Null
-    $QAs.Add('Dharma.sivaswamy') | Out-Null
-    $QAs.Add('Srikanth.Bassiredy') | Out-Null
+  # llenando el arreglo de $QAs
+  $QAs.Add('ambika.siddaiah') | Out-Null
+  $QAs.Add('angel.farro') | Out-Null
+  $QAs.Add('betsy.cardama') | Out-Null
+  $QAs.Add('consuelo.lucas') | Out-Null
+  $QAs.Add('edgar.aspiros') | Out-Null
+  $QAs.Add('jaqueline.baca') | Out-Null
+  $QAs.Add('jkdiaz') | Out-Null
+  $QAs.Add('lupe.calero') | Out-Null
+  $QAs.Add('sissi.hidalgo') | Out-Null
+  $QAs.Add('yohana.espinoza') | Out-Null
+  $QAs.Add('Yespinoza') | Out-Null
+  $QAs.Add('Sambu.sathyamoorthy') | Out-Null
+  $QAs.Add('Dharma.sivaswamy') | Out-Null
+  $QAs.Add('Srikanth.Bassiredy') | Out-Null
 
-     # llenando el arreglo de $Analysts
-    $Analysts.Add('david.sandoval') | Out-Null
-    $Analysts.Add('eduardo.sarmiento') | Out-Null
-    $Analysts.Add('felipe.rojas') | Out-Null
-    $Analysts.Add('gonzalo.recabarren') | Out-Null
-    $Analysts.Add('hector.lujan') | Out-Null
-    $Analysts.Add('jesus.diaz') | Out-Null
-    $Analysts.Add('margarita.carbajal') | Out-Null
-    $Analysts.Add('patricia.valdivia') | Out-Null
-    $Analysts.Add('pedro.mendez') | Out-Null
-    $Analysts.Add('raul.maguina') | Out-Null
-    $Analysts.Add('ronald.valdivia') | Out-Null
-    $Analysts.Add('silvia.barba') | Out-Null
-    $Analysts.Add('Roger.cruz') | Out-Null
+  # llenando el arreglo de $Analysts
+  $Analysts.Add('david.sandoval') | Out-Null
+  $Analysts.Add('eduardo.sarmiento') | Out-Null
+  $Analysts.Add('felipe.rojas') | Out-Null
+  $Analysts.Add('gonzalo.recabarren') | Out-Null
+  $Analysts.Add('hector.lujan') | Out-Null
+  $Analysts.Add('jesus.diaz') | Out-Null
+  $Analysts.Add('margarita.carbajal') | Out-Null
+  $Analysts.Add('patricia.valdivia') | Out-Null
+  $Analysts.Add('pedro.mendez') | Out-Null
+  $Analysts.Add('raul.maguina') | Out-Null
+  $Analysts.Add('ronald.valdivia') | Out-Null
+  $Analysts.Add('silvia.barba') | Out-Null
+  $Analysts.Add('Roger.cruz') | Out-Null
 
-    $UsersScript = "SET XACT_ABORT ON;
+  # llenando el arreglo de $InfoSys
+  $InfoSys.Add('Vishnu.Gopakumar') | Out-Null
+  $InfoSys.Add('Ivy.Antony') | Out-Null
+  $InfoSys.Add('Vasuma.Raavi') | Out-Null
+  $InfoSys.Add('Avikal.Joshi ') | Out-Null
+  $InfoSys.Add('Sandeep.Moudgalya') | Out-Null
+  $InfoSys.Add('Ambily.Surendran') | Out-Null
+  $InfoSys.Add('Parvathy.Lakshmi') | Out-Null
+  $InfoSys.Add('Nitya.James') | Out-Null
+  $InfoSys.Add('Rabbani.Shaik') | Out-Null
+  $InfoSys.Add('Rahul.Mathur') | Out-Null
+  $InfoSys.Add('Stella.Mathew') | Out-Null
+  $InfoSys.Add('Cyril.Mathews') | Out-Null
+  $InfoSys.Add('Anjala.Joseph') | Out-Null
+  $InfoSys.Add('Vrinda.Nambiar') | Out-Null
+  $InfoSys.Add('Reshmi.Vijayan') | Out-Null
+  $InfoSys.Add('Akhilkumar.SasidharanNair') | Out-Null
+  $InfoSys.Add('Revathy.RadhakrishnanNair') | Out-Null
+  $InfoSys.Add('Densen.Puthussery') | Out-Null
+  $InfoSys.Add('Vishakh.babu') | Out-Null
+  $InfoSys.Add('Manju.Mohn') | Out-Null
+  $InfoSys.Add('Arjun.Vijayan') | Out-Null
+  $InfoSys.Add('Sumila.R') | Out-Null
+  $InfoSys.Add('Umasankar.Ramachandran') | Out-Null
+  $InfoSys.Add('Arun.Balasubramanian') | Out-Null
+  $InfoSys.Add('Gargi.Ramesh') | Out-Null
+  $InfoSys.Add('Meera.Raj') | Out-Null
+  $InfoSys.Add('Namasivayam.Krishnamoorthy') | Out-Null
+  $InfoSys.Add('Nivedha.Ganapathy') | Out-Null
+  $InfoSys.Add('Kiran.Poduval') | Out-Null
+  $InfoSys.Add('Ritika.Bakshi') | Out-Null
+
+
+  $UsersScript = "SET XACT_ABORT ON;
                     BEGIN TRANSACTION;
                     DECLARE 
                         @UserName VARCHAR(20),	  @FirstName VARCHAR(50),	@LastName VARCHAR(50), 
@@ -96,25 +134,28 @@ function Add-tssPLSApplicationUsers {
 
                     DECLARE @x TABLE(username VARCHAR(64))
                     "
-    if ($Environment -cin ('DEV','INT')) {
-        foreach ($developer in $Developers){
-            $UsersScript = $UsersScript + "INSERT INTO @x VALUES('" + $developer + "') `n"
-        }
-    }   
-    if ($Environment -cin ('QA','INT','UAT')) {
-        foreach ($qa in $QAs){
-            $UsersScript = $UsersScript + "INSERT INTO @x VALUES('" + $qa + "') `n"
-        }
-    }                 
-    foreach ($analyst in $Analysts){
-        $UsersScript = $UsersScript + "INSERT INTO @x VALUES('" + $analyst + "') `n"
+  if ($Environment -cin ('DEV', 'DEVXPO', 'INT')) {
+    foreach ($developer in $Developers) {
+      $UsersScript = $UsersScript + "INSERT INTO @x VALUES('" + $developer + "') `n"
     }
+  }   
+  if ($Environment -cin ('QA', 'INT', 'UAT')) {
+    foreach ($qa in $QAs) {
+      $UsersScript = $UsersScript + "INSERT INTO @x VALUES('" + $qa + "') `n"
+    }
+  }                 
+  foreach ($analyst in $Analysts) {
+    $UsersScript = $UsersScript + "INSERT INTO @x VALUES('" + $analyst + "') `n"
+  }
+  foreach ($InfoS in $InfoSys) {
+    $UsersScript = $UsersScript + "INSERT INTO @x VALUES('" + $InfoS + "') `n"
+  }
 
-    $UsersScript = $UsersScript + "INSERT INTO @x VALUES('SVC_IISDEV1') `n"
-    $UsersScript = $UsersScript + "INSERT INTO @x VALUES('SVC_IISQA1') `n"
-    $UsersScript = $UsersScript + "INSERT INTO @x VALUES('plsediadmin') `n"
+  $UsersScript = $UsersScript + "INSERT INTO @x VALUES('SVC_IISDEV1') `n"
+  $UsersScript = $UsersScript + "INSERT INTO @x VALUES('SVC_IISQA1') `n"
+  $UsersScript = $UsersScript + "INSERT INTO @x VALUES('plsediadmin') `n"
 
-    $UsersScript = $UsersScript + "DECLARE xCursor CURSOR
+  $UsersScript = $UsersScript + "DECLARE xCursor CURSOR
     FOR SELECT username FROM @x;
     OPEN xCursor;
     FETCH NEXT FROM xCursor INTO @username;
@@ -391,13 +432,19 @@ function Add-tssPLSApplicationUsers {
     COMMIT;
     GO"
 
-    if ($PSCmdlet.ShouldProcess($PLSDB,'Creando usuarios PLS')) {
+  if ($OutputScriptOnly) {
+    Write-Output $UsersScript
+  }
+  else {
+    if ($PSCmdlet.ShouldProcess($PLSDB, 'Creando usuarios PLS')) {
 
-        $PLSDB.ExecuteNonQuery($UsersScript)
-        #ejecutamos el script una segunda vez para asegurar que pase bien
-        #este es un bug conocido del script
-        $PLSDB.ExecuteNonQuery($UsersScript)
+      $PLSDB.ExecuteNonQuery($UsersScript)
+      #ejecutamos el script una segunda vez para asegurar que pase bien
+      #este es un bug conocido del script
+      $PLSDB.ExecuteNonQuery($UsersScript)
 
     }
+  }
+  
 
 }
