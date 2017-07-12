@@ -9,7 +9,7 @@ function Add-tssPLSApplicationUsers {
     [string]$SubEnvironment,
 
     [switch]$OutputScriptOnly
-        
+
   )
 
   Write-Verbose "Preparando conexión a la base de datos"
@@ -109,7 +109,6 @@ function Add-tssPLSApplicationUsers {
   $InfoSys.Add('Nivedha.Ganapathy') | Out-Null
   $InfoSys.Add('Kiran.Poduval') | Out-Null
   $InfoSys.Add('Ritika.Bakshi') | Out-Null
-
 
   $UsersScript = "SET XACT_ABORT ON;
                     BEGIN TRANSACTION;
@@ -446,6 +445,5 @@ function Add-tssPLSApplicationUsers {
 
     }
   }
-  
 
 }

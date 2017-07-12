@@ -70,7 +70,7 @@
                 $SqlDatabase.Alter()
                 $Enddate = Get-Date
                 $duracion = "{0:G}" -f (New-TimeSpan -Start $Startdate -End $EndDate)
-                $ResultObj | Add-Member -Name "DuracionHabilitaAutocrecimiento" -Value $duracion -MemberType NoteProperty
+                $ResultObj | Add-Member -Name "DuracionHabilitaAutocrecimiento" -Value $duracion -MemberType NoteProperty -Force
             } # end for habilita Autocrecimiento
         } 
 
