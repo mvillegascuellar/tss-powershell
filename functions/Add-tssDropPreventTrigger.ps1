@@ -42,7 +42,7 @@ function Add-tssDropPreventTrigger {
     [string] $DBType = 'All'
   )
 
-  $tsstoolspath = Split-Path -Path ((Get-Module -ListAvailable tsstools).path) -Parent
+  $tsstoolspath = Split-Path -Path ((Get-Module tsstools).path) -Parent
   $ScriptDBTrigger = Join-Path -Path $tsstoolspath -ChildPath "sqlscripts\xpo.disable_ddl_database_trigger.sql"
   if (-not (Test-Path -Path $ScriptDBTrigger)) {
     Write-Error "No se encontro el script de creación de trigger para evitar operaciones DDL"

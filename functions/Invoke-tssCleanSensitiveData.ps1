@@ -5,7 +5,7 @@
         [object] $PLSDatabase
     )
 
-    $tsstoolspath = Split-Path -Path ((Get-Module -ListAvailable tsstools).path) -Parent
+    $tsstoolspath = Split-Path -Path ((Get-Module tsstools).path) -Parent
     $ScriptCleanData = Join-Path -Path $tsstoolspath -ChildPath "sqlscripts\xpo.clean_sensitive_data.sql"
 
     $ResultObj = [pscustomobject]@{

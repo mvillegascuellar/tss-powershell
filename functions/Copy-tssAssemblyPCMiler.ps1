@@ -45,7 +45,7 @@
   $sourceassemblies = 'PcMilerCLR' , 'PcMilerCLR.XmlSerializers' 
 
     
-  $tsstoolspath = Split-Path -Path ((Get-Module -ListAvailable tsstools).path) -Parent
+  $tsstoolspath = Split-Path -Path ((Get-Module tsstools).path) -Parent
   $ScriptCreateFxPLS = Join-Path -Path $tsstoolspath -ChildPath "sqlscripts\xpo.pls_create_pcmiler_functions.sql"
   $ScriptCreateFxPWB = Join-Path -Path $tsstoolspath -ChildPath "sqlscripts\xpo.pwb_create_pcmiler_functions.sql"
 

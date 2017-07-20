@@ -21,7 +21,7 @@ function Add-tssPLSApplicationUsers {
   $Analysts = New-Object -TypeName System.Collections.ArrayList
   $InfoSys = New-Object -TypeName System.Collections.ArrayList
 
-  $tsstoolspath = Split-Path -Path ((Get-Module -ListAvailable tsstools).path) -Parent
+  $tsstoolspath = Split-Path -Path ((Get-Module tsstools).path) -Parent
   $DevelopersList = Join-Path -Path $tsstoolspath -ChildPath "config\developers.txt"
   $QAsList = Join-Path -Path $tsstoolspath -ChildPath "config\qas.txt"
   $AnalystsList = Join-Path -Path $tsstoolspath -ChildPath "config\analysts.txt"
@@ -388,3 +388,4 @@ function Add-tssPLSApplicationUsers {
 
 }
 
+Add-tssPLSApplicationUsers -Environment DEV -SubEnvironment DEV1 -Verbose
