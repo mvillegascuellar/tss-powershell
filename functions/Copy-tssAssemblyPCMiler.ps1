@@ -46,8 +46,17 @@
 
     
   $tsstoolspath = Split-Path -Path ((Get-Module tsstools).path) -Parent
-  $ScriptCreateFxPLS = Join-Path -Path $tsstoolspath -ChildPath "sqlscripts\xpo.pls_create_pcmiler_functions.sql"
-  $ScriptCreateFxPWB = Join-Path -Path $tsstoolspath -ChildPath "sqlscripts\xpo.pwb_create_pcmiler_functions.sql"
+  #$ScriptCreateFxPLS = Join-Path -Path $tsstoolspath -ChildPath "sqlscripts\xpo.pls_create_pcmiler_functions.sql"
+  #$ScriptCreateFxPWB = Join-Path -Path $tsstoolspath -ChildPath "sqlscripts\xpo.pwb_create_pcmiler_functions.sql"
+
+  $ScriptFxPCMMiles = Join-Path -Path $tsstoolspath -ChildPath "sqlscripts\xpo.fx.PCMMiles.sql"
+  $ScriptfxPCMDriverTime = Join-Path -Path $tsstoolspath -ChildPath "sqlscripts\xpo.fx.PCMDriverTime.sql"
+  $ScriptfxPCMCityState = Join-Path -Path $tsstoolspath -ChildPath "sqlscripts\xpo.fx.PCMCityState.sql"
+  $ScriptfxPCMIsValidLocation = Join-Path -Path $tsstoolspath -ChildPath "sqlscripts\xpo.fx.PCMIsValidLocation.sql"
+  $ScriptfxPCMSearchLocations = Join-Path -Path $tsstoolspath -ChildPath "sqlscripts\xpo.fx.PCMSearchLocations.sql"
+  
+
+  D:\GitHub\tsstools\sqlscripts\xpo.fx.PCMSearchLocations.sql
 
 
   Write-Verbose "Iniciando verificación de configuraciones de base de datos"
@@ -154,8 +163,10 @@
   }
         
   if ($PSCmdlet.ShouldProcess($DestPLSDB, "Creando funciones para PLS")) {
-    if (Test-Path -Path $ScriptCreateFxPLS) {
-      Invoke-Sqlcmd -ServerInstance $DestPLSDB.parent.name -Database $DestPLSDB.name -InputFile $ScriptCreateFxPLS
+    if (Test-Path -Path $ScriptFxPCMMiles) {
+      #Invoke-Sqlcmd2 -ServerInstance $DestPLSDB.parent.name -Database $DestPLSDB.name -InputFile $ScriptCreateFxPLS
+      Invoke-Sqlcmd2 -ServerInstance $DestPLSDB.parent.name -Database $DestPLSDB.name -InputFile $ScriptFxPCMMiles
+      Invoke-Sqlcmd2 -ServerInstance $DestPLSDB.parent.name -Database $DestPLSDB.name -InputFile $ScriptfxPCMDriverTime
     }
     else {
       Write-Warning "No se encontro el script de creación de funciones PCMiler para PLS"
@@ -164,8 +175,13 @@
     
   if ($SkipPWB -eq $false) {
     if ($PSCmdlet.ShouldProcess($DestPWBDB, "Creando funciones para PWB")) {
-      if (Test-Path -Path $ScriptCreateFxPWB) {
-        Invoke-Sqlcmd -ServerInstance $DestPWBDB.parent.name -Database $DestPWBDB.name -InputFile $ScriptCreateFxPWB
+      if (Test-Path -Path $ScriptFxPCMMiles) {
+        #Invoke-Sqlcmd2 -ServerInstance $DestPWBDB.parent.name -Database $DestPWBDB.name -InputFile $ScriptCreateFxPWB
+        Invoke-Sqlcmd2 -ServerInstance $DestPWBDB.parent.name -Database $DestPWBDB.name -InputFile $ScriptFxPCMMiles
+        Invoke-Sqlcmd2 -ServerInstance $DestPWBDB.parent.name -Database $DestPWBDB.name -InputFile $ScriptfxPCMDriverTime
+        Invoke-Sqlcmd2 -ServerInstance $DestPWBDB.parent.name -Database $DestPWBDB.name -InputFile $ScriptfxPCMCityState
+        Invoke-Sqlcmd2 -ServerInstance $DestPWBDB.parent.name -Database $DestPWBDB.name -InputFile $ScriptfxPCMIsValidLocation
+        Invoke-Sqlcmd2 -ServerInstance $DestPWBDB.parent.name -Database $DestPWBDB.name -InputFile $ScriptfxPCMSearchLocations
       }
       else {
         Write-Warning "No se encontro el script de creación de funciones PCMiler para PWB"
