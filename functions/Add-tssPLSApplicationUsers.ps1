@@ -2,10 +2,14 @@ function Add-tssPLSApplicationUsers {
   [CmdletBinding(SupportsShouldProcess)]
   param (
     [parameter(Mandatory = $true)]
-    [Validateset('DEV', 'INT', 'QA', 'UAT', 'PERF', 'PROD', 'LOCAL', 'DBA')]
+    [Validateset('DEV', 'DEVXPO', 'INT', 'QA', 'UAT', 'PERF', 'PROD', 'LOCAL', 'DBA')]
     [string]$Environment,
+
     [parameter(Mandatory = $true)]
-    [string]$SubEnvironment
+    [string]$SubEnvironment,
+
+    [switch]$OutputScriptOnly
+
   )
 
   Write-Verbose "Preparando conexión a la base de datos"
@@ -41,6 +45,7 @@ function Add-tssPLSApplicationUsers {
   $Developers.Add('omar.polo') | Out-Null
   $Developers.Add('viacheslav.guevara') | Out-Null
   $Developers.Add('cwheetley') | Out-Null
+  $Developers.Add('dchapman') | Out-Null
 
   # llenando el arreglo de $QAs
   $QAs.Add('ambika.siddaiah') | Out-Null
@@ -72,22 +77,38 @@ function Add-tssPLSApplicationUsers {
   $Analysts.Add('ronald.valdivia') | Out-Null
   $Analysts.Add('silvia.barba') | Out-Null
   $Analysts.Add('Roger.cruz') | Out-Null
-    
+
   # llenando el arreglo de $InfoSys
-  $InfoSys.Add('AMBILY.SURENDRAN') | Out-Null
-  $InfoSys.Add('AVIKAL.JOSHI') | Out-Null
-  $InfoSys.Add('Dharma.sivaswamy') | Out-Null
-  $InfoSys.Add('IVY.ANTONY') | Out-Null
-  $InfoSys.Add('NITYA.JAMES') | Out-Null
-  $InfoSys.Add('PARVATHY.LAKSHMI') | Out-Null
-  $InfoSys.Add('RABBANI.SHAIK') | Out-Null
-  $InfoSys.Add('RAHUL.MATHUR') | Out-Null
-  $InfoSys.Add('Sambu.sathyamoorthy') | Out-Null
-  $InfoSys.Add('SANDEEP.MOUDGALYA') | Out-Null
-  $InfoSys.Add('Srikanth.Bassiredy') | Out-Null
-  $InfoSys.Add('STELLA.MATHEW') | Out-Null
-  $InfoSys.Add('VASUMA.RAAVI') | Out-Null
-  $InfoSys.Add('VISHNU.GOPAKUMAR') | Out-Null
+  $InfoSys.Add('Vishnu.Gopakumar') | Out-Null
+  $InfoSys.Add('Ivy.Antony') | Out-Null
+  $InfoSys.Add('Vasuma.Raavi') | Out-Null
+  $InfoSys.Add('Avikal.Joshi ') | Out-Null
+  $InfoSys.Add('Sandeep.Moudgalya') | Out-Null
+  $InfoSys.Add('Ambily.Surendran') | Out-Null
+  $InfoSys.Add('Parvathy.Lakshmi') | Out-Null
+  $InfoSys.Add('Nitya.James') | Out-Null
+  $InfoSys.Add('Rabbani.Shaik') | Out-Null
+  $InfoSys.Add('Rahul.Mathur') | Out-Null
+  $InfoSys.Add('Stella.Mathew') | Out-Null
+  $InfoSys.Add('Cyril.Mathews') | Out-Null
+  $InfoSys.Add('Anjala.Joseph') | Out-Null
+  $InfoSys.Add('Vrinda.Nambiar') | Out-Null
+  $InfoSys.Add('Reshmi.Vijayan') | Out-Null
+  $InfoSys.Add('Akhilkumar.SasidharanNair') | Out-Null
+  $InfoSys.Add('Revathy.RadhakrishnanNair') | Out-Null
+  $InfoSys.Add('Densen.Puthussery') | Out-Null
+  $InfoSys.Add('Vishakh.babu') | Out-Null
+  $InfoSys.Add('Manju.Mohn') | Out-Null
+  $InfoSys.Add('Arjun.Vijayan') | Out-Null
+  $InfoSys.Add('Sumila.R') | Out-Null
+  $InfoSys.Add('Umasankar.Ramachandran') | Out-Null
+  $InfoSys.Add('Arun.Balasubramanian') | Out-Null
+  $InfoSys.Add('Gargi.Ramesh') | Out-Null
+  $InfoSys.Add('Meera.Raj') | Out-Null
+  $InfoSys.Add('Namasivayam.Krishnamoorthy') | Out-Null
+  $InfoSys.Add('Nivedha.Ganapathy') | Out-Null
+  $InfoSys.Add('Kiran.Poduval') | Out-Null
+  $InfoSys.Add('Ritika.Bakshi') | Out-Null
 
   $UsersScript = "SET XACT_ABORT ON;
                     BEGIN TRANSACTION;
@@ -113,12 +134,12 @@ function Add-tssPLSApplicationUsers {
 
                     DECLARE @x TABLE(username VARCHAR(64))
                     "
-  if ($Environment -cin ('DEV', 'INT')) {
+  if ($Environment -cin ('DEV', 'DEVXPO', 'INT')) {
     foreach ($developer in $Developers) {
       $UsersScript = $UsersScript + "INSERT INTO @x VALUES('" + $developer + "') `n"
     }
   }   
-  if ($Environment -cin ('QA', 'INT', 'UAT', 'PERF')) {
+  if ($Environment -cin ('QA', 'INT', 'UAT')) {
     foreach ($qa in $QAs) {
       $UsersScript = $UsersScript + "INSERT INTO @x VALUES('" + $qa + "') `n"
     }
@@ -411,13 +432,18 @@ function Add-tssPLSApplicationUsers {
     COMMIT;
     GO"
 
-  if ($PSCmdlet.ShouldProcess($PLSDB, 'Creando usuarios PLS')) {
+  if ($OutputScriptOnly) {
+    Write-Output $UsersScript
+  }
+  else {
+    if ($PSCmdlet.ShouldProcess($PLSDB, 'Creando usuarios PLS')) {
 
-    $PLSDB.ExecuteNonQuery($UsersScript)
-    #ejecutamos el script una segunda vez para asegurar que pase bien
-    #este es un bug conocido del script
-    $PLSDB.ExecuteNonQuery($UsersScript)
+      $PLSDB.ExecuteNonQuery($UsersScript)
+      #ejecutamos el script una segunda vez para asegurar que pase bien
+      #este es un bug conocido del script
+      $PLSDB.ExecuteNonQuery($UsersScript)
 
+    }
   }
 
 }

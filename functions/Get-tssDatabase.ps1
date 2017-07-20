@@ -3,12 +3,12 @@
     [CmdletBinding()]
     param (
     [parameter(Mandatory=$true)]
-    [Validateset('DEV', 'INT', 'QA', 'UAT', 'PERF', 'PROD', 'LOCAL', 'DBA')]
+    [Validateset('DEV', 'DEVXPO', 'INT', 'QA', 'UAT', 'PERF', 'PROD', 'LOCAL', 'DBA')]
     [string] $Environment,
     [parameter(Mandatory=$true)]
     [string] $SubEnvironment,
     [parameter(Mandatory=$true)]
-    [Validateset('PLS', 'PLSPWB', 'PLSWEB')]
+    [Validateset('PLS', 'PLSPWB', 'PLSWEB', 'PLS_AUDIT', 'PLSCONFIG','PLSEDI')]
     [string] $Database
     )
 
@@ -18,6 +18,8 @@
         { $FullDatabaseName = $Database + "_" + $Environment }
     elseif ($Environment -eq 'PROD')
         { $FullDatabaseName = $Database + "_PRD" }
+    elseif ($Environment -eq 'DEVXPO')
+        { $FullDatabaseName = $Database + "_DEV_" + $SubEnvironment }
     else { $FullDatabaseName = $Database + "_" + $Environment + "_" + $SubEnvironment }
 
     $DBServer = Get-tssConnection -Environment $Environment

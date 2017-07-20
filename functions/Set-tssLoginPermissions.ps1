@@ -1,128 +1,103 @@
 ﻿function Set-tssLoginPermissions {
-    [CmdletBinding(SupportsShouldProcess)]
-    param (
-         [Validateset('DEV', 'INT', 'QA', 'UAT', 'PERF', 'PROD', 'LOCAL', 'DBA')]
-        [parameter(Mandatory=$true)]
-        [string]$Environment,
-        [parameter(Mandatory=$true)]
-        [string]$SubEnvironment,
-        [switch]$SkipPWB
-    )
+  [CmdletBinding(SupportsShouldProcess)]
+  param (
+    [Validateset('DEV', 'DEVXPO', 'INT', 'QA', 'UAT', 'PERF', 'PROD', 'LOCAL', 'DBA')]
+    [parameter(Mandatory = $true)]
+    [string]$Environment,
+        
+    [parameter(Mandatory = $true)]
+    [string]$SubEnvironment,
 
-    Write-Verbose "Preparando conexión a la base de datos PLS"
-    $PLSDB = Get-tssDatabase -Environment $Environment -SubEnvironment $SubEnvironment -Database PLS
-    
-    [string]$AnalystsGroup = 'TSS\TSI.RO.analysts'
-    if ($SkipPWB -eq $false) {
-        Write-Verbose "Preparando conexión a la base de datos PWB"
-        $PWBDB = Get-tssDatabase -Environment $Environment -SubEnvironment $SubEnvironment -Database PLSPWB
-    }
+    [parameter(Mandatory = $true, ParameterSetName = "CompleteSet")]
+    [switch]$AllRODBs,
 
-    $logins = New-Object -TypeName System.Collections.ArrayList
+    [Validateset('PLS', 'PLSPWB', 'PLSWEB', 'PLS_AUDIT', 'PLSCONFIG', 'PLSEDI')]
+    [parameter(Mandatory = $true, ParameterSetName = "SpecificDBs")]
+    [string[]]$RODatabases
+  )
 
-    if ($Environment -cin ('DEV','UAT')){
-        $logins.Add('tssuser') | Out-Null
-    }
-    if ($Environment -cin ('QA','INT','UAT','PERF')){
-        $logins.Add('xpouser') | Out-Null
-    }
+  $RODBs = New-Object -TypeName System.Collections.ArrayList
+  if ($AllRODBs) {
+    $RODBs.Add("PLS") | Out-Null
+    $RODBs.Add("PLSPWB") | Out-Null
+    $RODBs.Add("PLSWEB") | Out-Null
+    $RODBs.Add("PLS_AUDIT") | Out-Null
+    $RODBs.Add("PLSCONFIG") | Out-Null
+    $RODBs.Add("PLSEDI") | Out-Null
+  }
+  else {
+    $RODBs = $RODatabases
+  }
 
-    foreach ($login in $logins){
-        Write-Verbose "Verificando si el login $login existe"
-        if ($PLSDB.parent.logins.contains($login)){
-            Write-Verbose "============================================"
-            Write-Verbose "Configurando permisos para base de datos PLS"
-            Write-Verbose "============================================"
-            Write-Verbose "Verificando si el usuario $login existe"
-            if ($PLSDB.Users.Contains($login) -eq $false){
-                if ($PSCmdlet.ShouldProcess($PLSDB,"Creando usuario: $login")) {
-                    $Newuser = New-Object ('Microsoft.SqlServer.Management.Smo.User') ($PLSDB, $login)
-                    $Newuser.login = $login
-                    $Newuser.create()
-                }
-            }
-            else
-            {
-                if ($PSCmdlet.ShouldProcess($PLSDB,"Asociando usuario con login: $login")) {
-                    $sqlfixorphan = "ALTER USER " + $login + " WITH LOGIN = " + $login
-                    $PLSDB.ExecuteNonQuery($sqlfixorphan) | Out-Null
-                }
-            }
-            if ($PSCmdlet.ShouldProcess($PLSDB,"Asociando los roles de $login")) {
-                $PLSDB.Roles['db_datareader'].AddMember($login)
-                $PLSDB.Roles['db_datawriter'].AddMember($login)
-                if ($Environment -eq 'DEV'){
-                    $PLSDB.Roles['db_owner'].AddMember($login)
-                }
-            }
+  $logins = New-Object -TypeName System.Collections.ArrayList
 
-            if ($Environment -eq 'DEV'){
-                if ($PSCmdlet.ShouldProcess($PLSDB,"Asociando al grupo de analistas como db_owner")) {
-                    if ($PLSDB.Users.Contains($AnalystsGroup) -eq $false){
-                        $Newuser = New-Object ('Microsoft.SqlServer.Management.Smo.User') ($PLSDB, $AnalystsGroup)
-                        $Newuser.login = $AnalystsGroup
-                        $Newuser.create()
-                    }
-                    $PLSDB.Roles['db_owner'].AddMember($AnalystsGroup)
-                }
-            }
+  if ($Environment -cin ('DEV', 'DEVXPO', 'UAT')) {
+    $logins.Add('tssuser') | Out-Null
+  }
+  if ($Environment -cin ('QA', 'INT', 'UAT', 'PERF')) {
+    $logins.Add('xpouser') | Out-Null
+  }
+  if ($Environment -cin ('DEVXPO')) {
+    $logins.Add('infosysuser') | Out-Null
+  }
 
-            if ($PSCmdlet.ShouldProcess($PLSDB,"Asociando los permisos de objeto de $login")) {
-                $permission = New-Object -typeName Microsoft.SqlServer.Management.Smo.ObjectPermissionSet
-                $permission.Receive = $true
-                $PLSDB.ServiceBroker.Queues['//XPO/RailOptimizer/DataServices/NotificationsTargetQueue'].grant($permission,$login)
-                $permission = New-Object -typeName Microsoft.SqlServer.Management.Smo.ObjectPermissionSet
-                $permission.Execute = $true
-                $PLSDB.Schemas['dbo'].Grant($permission,$login)
-                $PLSDB.Schemas['es'].Grant($permission,$login)
-                $PLSDB.Schemas['Tzdb'].Grant($permission,$login)
-                $PLSDB.Schemas['xpo_portal'].Grant($permission,$login)
-            }
+  foreach ($RODB in $RODBs) {
+    Write-Verbose "Preparando conexión a la base de datos $RODB"
+    $PLSDB = Get-tssDatabase -Environment $Environment -SubEnvironment $SubEnvironment -Database $RODB
 
-            if ($SkipPWB -eq $false) {
-                Write-Verbose "============================================"
-                Write-Verbose "Configurando permisos para base de datos PWB"
-                Write-Verbose "============================================"
-                Write-Verbose "Verificando si el usuario $login existe"
-                if ($PWBDB.Users.Contains($login) -eq $false){
-                    if ($PSCmdlet.ShouldProcess($PWBDB,"Creando usuario: $login")) {
-                        $Newuser = New-Object ('Microsoft.SqlServer.Management.Smo.User') ($PWBDB, $login)
-                        $Newuser.login = $login
-                        $Newuser.create()
-                    }
-                }
-                else
-                {
-                    if ($PSCmdlet.ShouldProcess($PWBDB,"Asociando usuario con login: $login")) {
-                        $sqlfixorphan = "ALTER USER " + $login + " WITH LOGIN = " + $login
-                        $PWBDB.ExecuteNonQuery($sqlfixorphan) | Out-Null
-                    }
-                }
-                if ($PSCmdlet.ShouldProcess($PWBDB,"Asociando los roles de $login")) {
-                    $PWBDB.Roles['db_datareader'].AddMember($login)
-                    $PWBDB.Roles['db_datawriter'].AddMember($login)
-                    if ($Environment -eq 'DEV'){
-                        $PWBDB.Roles['db_owner'].AddMember($login)
-                    }
-                }
-                
-                if ($PSCmdlet.ShouldProcess($PWBDB,"Asociando los permisos de objeto de $login")) {
-                    $permission = New-Object -typeName Microsoft.SqlServer.Management.Smo.ObjectPermissionSet
-                    $permission.Execute = $true
-                    $PWBDB.Schemas['dbo'].Grant($permission,$login)
-                }
-
-                if ($Environment -eq 'DEV'){
-                    if ($PSCmdlet.ShouldProcess($PWBDB,"Asociando al grupo de analistas como db_owner")) {
-                        if ($PWBDB.Users.Contains($AnalystsGroup) -eq $false){
-                            $Newuser = New-Object ('Microsoft.SqlServer.Management.Smo.User') ($PWBDB, $AnalystsGroup)
-                            $Newuser.login = $AnalystsGroup
-                            $Newuser.create()
-                        }
-                        $PWBDB.Roles['db_owner'].AddMember($AnalystsGroup)
-                    }
-                }
-            }
+    foreach ($login in $logins) {
+      Write-Verbose "Verificando si el login $login existe"
+      if ($PLSDB.parent.logins.contains($login)) {
+        Write-Verbose "Verificando si el usuario $login existe en base de datos $RODB"
+        if ($PLSDB.Users.Contains($login) -eq $false) {
+          if ($PSCmdlet.ShouldProcess($PLSDB, "Creando usuario: $login")) {
+            $Newuser = New-Object ('Microsoft.SqlServer.Management.Smo.User') ($PLSDB, $login)
+            $Newuser.login = $login
+            $Newuser.create()
+          }
         }
+        else {
+          if ($PSCmdlet.ShouldProcess($PLSDB, "Asociando usuario con login: $login")) {
+            $sqlfixorphan = "ALTER USER " + $login + " WITH LOGIN = " + $login
+            $PLSDB.ExecuteNonQuery($sqlfixorphan) | Out-Null
+          }
+        }
+        if ($PSCmdlet.ShouldProcess($PLSDB, "Asociando los roles de $login")) {
+          $PLSDB.Roles['db_datareader'].AddMember($login)
+          $PLSDB.Roles['db_datawriter'].AddMember($login)
+          if ($Environment -cin ('DEV', 'DEVXPO')) {
+            $PLSDB.Roles['db_owner'].AddMember($login)
+          }
+        }
+
+        if ($Environment -eq 'DEV') {
+          if ($PSCmdlet.ShouldProcess($PLSDB, "Asociando al grupo de analistas como db_owner")) {
+            if ($PLSDB.Users.Contains($AnalystsGroup) -eq $false) {
+              $Newuser = New-Object ('Microsoft.SqlServer.Management.Smo.User') ($PLSDB, $AnalystsGroup)
+              $Newuser.login = $AnalystsGroup
+              $Newuser.create()
+            }
+            $PLSDB.Roles['db_owner'].AddMember($AnalystsGroup)
+          }
+        }
+
+        if ($RODB -eq 'PLS') {
+          if ($PSCmdlet.ShouldProcess($PLSDB, "Asociando los permisos de objeto de $login")) {
+            $permission = New-Object -typeName Microsoft.SqlServer.Management.Smo.ObjectPermissionSet
+            $permission.Receive = $true
+            $PLSDB.ServiceBroker.Queues['//XPO/RailOptimizer/DataServices/NotificationsTargetQueue'].grant($permission, $login)
+            $permission = New-Object -typeName Microsoft.SqlServer.Management.Smo.ObjectPermissionSet
+            $permission.Execute = $true
+            $PLSDB.Schemas['dbo'].Grant($permission, $login)
+            $PLSDB.Schemas['es'].Grant($permission, $login)
+            $PLSDB.Schemas['Tzdb'].Grant($permission, $login)
+            $PLSDB.Schemas['xpo_portal'].Grant($permission, $login)
+          }
+        }
+       
+      }
     }
+
+  }
+  
 }

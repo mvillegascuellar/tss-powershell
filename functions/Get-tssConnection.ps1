@@ -16,6 +16,7 @@
     elseif ($Environment -eq 'DEV') { $ServerName = 'tssplsdb.tss.com.pe' }
     elseif ($Environment -eq 'LOCAL') { $ServerName = 'mvillegas.tss.com.pe' }
     elseif ($Environment -eq 'DBA') { $ServerName = 'devsqlstage01.xpo.pvt' }
+    elseif ($Environment -eq 'DEVXPO') { $ServerName = 'IDDDW0413.devxpo.pvt' }
     else {Write-Error -Message "Invalid Environment." }
 
     $DBServer = Connect-DbaSqlServer -SqlServer $ServerName
