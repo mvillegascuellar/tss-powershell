@@ -388,4 +388,3 @@ function Add-tssPLSApplicationUsers {
 
 }
 
-Add-tssPLSApplicationUsers -Environment DEV -SubEnvironment DEV1 -Verbose
