@@ -45,11 +45,13 @@
       $ResultObj | Add-Member -Name "DuracionTruncateTablasNoImportantes" -Value $TruncObj.DuracionTruncateTablasNoImportantes -MemberType NoteProperty
     }
 
-    if ($DBType -eq 'PLS' -and $SkipDataCleaning -neq $false) {
-      if ($PSCmdlet.ShouldProcess($SqlDatabase, "Limpieza de Data Sensible")) {
-        $CleanDataObj = Invoke-tssCleanSensitiveData -PLSDatabase $SqlDatabase
-        $ResultObj | Add-Member -Name "ScriptLimpieza" -Value $CleanDataObj.ScriptLimpieza -MemberType NoteProperty
-        $ResultObj | Add-Member -Name "DuracionLimpiezaDataSensible" -Value $CleanDataObj.DuracionLimpiezaDataSensible -MemberType NoteProperty
+    if ($DBType -eq 'PLS') {
+      if ($SkipDataCleaning -eq $false) {
+        if ($PSCmdlet.ShouldProcess($SqlDatabase, "Limpieza de Data Sensible")) {
+          $CleanDataObj = Invoke-tssCleanSensitiveData -PLSDatabase $SqlDatabase
+          $ResultObj | Add-Member -Name "ScriptLimpieza" -Value $CleanDataObj.ScriptLimpieza -MemberType NoteProperty
+          $ResultObj | Add-Member -Name "DuracionLimpiezaDataSensible" -Value $CleanDataObj.DuracionLimpiezaDataSensible -MemberType NoteProperty
+        }
       }
     }
         
