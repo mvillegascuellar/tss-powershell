@@ -70,6 +70,7 @@
           }
         }
 
+        <#
         if ($Environment -eq 'DEV') {
           if ($PSCmdlet.ShouldProcess($PLSDB, "Asociando al grupo de analistas como db_owner")) {
             if ($PLSDB.Users.Contains($AnalystsGroup) -eq $false) {
@@ -80,6 +81,7 @@
             $PLSDB.Roles['db_owner'].AddMember($AnalystsGroup)
           }
         }
+        #>
 
         if ($RODB -eq 'PLS') {
           if ($PSCmdlet.ShouldProcess($PLSDB, "Asociando los permisos de objeto de $login")) {

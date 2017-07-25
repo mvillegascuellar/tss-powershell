@@ -24,10 +24,9 @@ UPDATE ApplicationSetting
 SET Value = 'plsboadmin@tss.com.pe'
 WHERE GroupName = 'Work Order' AND Name= 'RailBillingEmail'
  
-GO 
+
 UPDATE PLSUser 
 SET Email = 'PLSBOADMIN@TSS.COM.PE', Phone = '4405010', Fax = '4405010'
-GO 
  
 UPDATE BPAddress
 SET FaxNo ='4405010', Email = 'PLSBOADMIN@TSS.COM.PE'
@@ -40,7 +39,7 @@ SET FaxNo = '4405010', Email = 'PLSBOADMIN@TSS.COM.PE'
  
 --UPDATE WorkOrderPartner
 --SET TelephoneNo = '4405010', FaxNo = '4405010', Email = 'PLSBOADMIN@TSS.COM.PE'
-GO 
+ 
 
  UPDATE WorkOrderPartner  SET 
 	TelephoneNo = CASE WHEN TelephoneNo IS NOT NULL THEN '4405010' ELSE NULL END,  
@@ -74,7 +73,6 @@ and Name ='DefaultPrinter'
  
 ---------
 
-GO
 
 --use plsconfig
 --Delete UserAlert
@@ -97,7 +95,7 @@ update s set s.status ='1'
 from PLSUser s 
 where UserName in ('pilar.garcia','SILVIA.VALDIVIA',
 'margarita.marchino','miguel.anastacio','patricia.yep','paul.romero1' )
-go
+
 
 
 
@@ -138,7 +136,7 @@ end
 
 
 
-go
+
 
 
 declare @companyid int
@@ -211,10 +209,10 @@ begin
                                 )
    end
 end
-go
 
-declare @companyid int
-declare @id int
+
+SET @companyid = null
+SET @id = null
 
 select @companyid = CompanyId
   from Company
@@ -250,10 +248,10 @@ begin
    end                                                             
 end
 
-go
 
-declare @companyid int
-declare @id int
+
+SET @companyid = NULL
+SET @id = NULL
 
 select @companyid = CompanyId
   from Company
@@ -327,7 +325,7 @@ update c set ToMail  ='PLSBOADMIN@TSS.COM.PE' FROM CustomerOrderExceptionEmail C
 
 --ALTER DATABASE DB_NAME SET NEW_BROKER WITH ROLLBACK IMMEDIATE;---pls
 -- cOLAS
-GO
+
 --HABILITAR COLAS PARA PWB
 Declare @w nvarchar(max)
 set @w = 'ALTER DATABASE ' + db_name() + ' SET NEW_BROKER  WITH rollback immediate '

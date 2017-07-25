@@ -21,97 +21,37 @@ function Add-tssPLSApplicationUsers {
   $Analysts = New-Object -TypeName System.Collections.ArrayList
   $InfoSys = New-Object -TypeName System.Collections.ArrayList
 
+  $tsstoolspath = Split-Path -Path ((Get-Module tsstools).path) -Parent
+  $DevelopersList = Join-Path -Path $tsstoolspath -ChildPath "config\developers.txt"
+  $QAsList = Join-Path -Path $tsstoolspath -ChildPath "config\qas.txt"
+  $AnalystsList = Join-Path -Path $tsstoolspath -ChildPath "config\analysts.txt"
+  $InfosysList = Join-Path -Path $tsstoolspath -ChildPath "config\infosys.txt"
+
   # llenando el arreglo de developers
-  $Developers.Add('alanchayan') | Out-Null
-  $Developers.Add('alfredo.mendiola') | Out-Null
-  $Developers.Add('gkilmain') | Out-Null
-  $Developers.Add('alonso.bustos') | Out-Null
-  $Developers.Add('cesar.marchena') | Out-Null
-  $Developers.Add('cristian.ccori') | Out-Null
-  $Developers.Add('cristian.villegas') | Out-Null
-  $Developers.Add('daniel.arias') | Out-Null
-  $Developers.Add('diego.corrada') | Out-Null
-  $Developers.Add('elmer.ramirez') | Out-Null
-  $Developers.Add('ernesto.angeles') | Out-Null
-  $Developers.Add('hector.lopez') | Out-Null
-  $Developers.Add('israel.nizama') | Out-Null
-  $Developers.Add('jorge.garcia') | Out-Null
-  $Developers.Add('jorge.vargas') | Out-Null
-  $Developers.Add('jose.cardenas') | Out-Null
-  $Developers.Add('jose.castillo') | Out-Null
-  $Developers.Add('kiefer.fernandez') | Out-Null
-  $Developers.Add('luis.fuentes') | Out-Null
-  $Developers.Add('nelsson.aguilar') | Out-Null
-  $Developers.Add('omar.polo') | Out-Null
-  $Developers.Add('viacheslav.guevara') | Out-Null
-  $Developers.Add('cwheetley') | Out-Null
-  $Developers.Add('dchapman') | Out-Null
+  foreach ($developer in (Get-Content -Path $DevelopersList)) {
+    $Developers.Add($developer) | Out-Null   
+  }
 
   # llenando el arreglo de $QAs
-  $QAs.Add('ambika.siddaiah') | Out-Null
-  $QAs.Add('angel.farro') | Out-Null
-  $QAs.Add('betsy.cardama') | Out-Null
-  $QAs.Add('consuelo.lucas') | Out-Null
-  $QAs.Add('edgar.aspiros') | Out-Null
-  $QAs.Add('jaqueline.baca') | Out-Null
-  $QAs.Add('jkdiaz') | Out-Null
-  $QAs.Add('lupe.calero') | Out-Null
-  $QAs.Add('sissi.hidalgo') | Out-Null
-  $QAs.Add('yohana.espinoza') | Out-Null
-  $QAs.Add('Yespinoza') | Out-Null
-  $QAs.Add('Sambu.sathyamoorthy') | Out-Null
-  $QAs.Add('Dharma.sivaswamy') | Out-Null
-  $QAs.Add('Srikanth.Bassiredy') | Out-Null
-
+  foreach ($qa in (Get-Content -Path $QAsList)) {
+    $QAs.Add($qa) | Out-Null   
+  }
+  
   # llenando el arreglo de $Analysts
-  $Analysts.Add('david.sandoval') | Out-Null
-  $Analysts.Add('eduardo.sarmiento') | Out-Null
-  $Analysts.Add('felipe.rojas') | Out-Null
-  $Analysts.Add('gonzalo.recabarren') | Out-Null
-  $Analysts.Add('hector.lujan') | Out-Null
-  $Analysts.Add('jesus.diaz') | Out-Null
-  $Analysts.Add('margarita.carbajal') | Out-Null
-  $Analysts.Add('patricia.valdivia') | Out-Null
-  $Analysts.Add('pedro.mendez') | Out-Null
-  $Analysts.Add('raul.maguina') | Out-Null
-  $Analysts.Add('ronald.valdivia') | Out-Null
-  $Analysts.Add('silvia.barba') | Out-Null
-  $Analysts.Add('Roger.cruz') | Out-Null
-
+  foreach ($analyst in (Get-Content -Path $AnalystsList)) {
+    $Analysts.Add($analyst) | Out-Null   
+  }
+  
   # llenando el arreglo de $InfoSys
-  $InfoSys.Add('Vishnu.Gopakumar') | Out-Null
-  $InfoSys.Add('Ivy.Antony') | Out-Null
-  $InfoSys.Add('Vasuma.Raavi') | Out-Null
-  $InfoSys.Add('Avikal.Joshi ') | Out-Null
-  $InfoSys.Add('Sandeep.Moudgalya') | Out-Null
-  $InfoSys.Add('Ambily.Surendran') | Out-Null
-  $InfoSys.Add('Parvathy.Lakshmi') | Out-Null
-  $InfoSys.Add('Nitya.James') | Out-Null
-  $InfoSys.Add('Rabbani.Shaik') | Out-Null
-  $InfoSys.Add('Rahul.Mathur') | Out-Null
-  $InfoSys.Add('Stella.Mathew') | Out-Null
-  $InfoSys.Add('Cyril.Mathews') | Out-Null
-  $InfoSys.Add('Anjala.Joseph') | Out-Null
-  $InfoSys.Add('Vrinda.Nambiar') | Out-Null
-  $InfoSys.Add('Reshmi.Vijayan') | Out-Null
-  $InfoSys.Add('Akhilkumar.SasidharanNair') | Out-Null
-  $InfoSys.Add('Revathy.RadhakrishnanNair') | Out-Null
-  $InfoSys.Add('Densen.Puthussery') | Out-Null
-  $InfoSys.Add('Vishakh.babu') | Out-Null
-  $InfoSys.Add('Manju.Mohn') | Out-Null
-  $InfoSys.Add('Arjun.Vijayan') | Out-Null
-  $InfoSys.Add('Sumila.R') | Out-Null
-  $InfoSys.Add('Umasankar.Ramachandran') | Out-Null
-  $InfoSys.Add('Arun.Balasubramanian') | Out-Null
-  $InfoSys.Add('Gargi.Ramesh') | Out-Null
-  $InfoSys.Add('Meera.Raj') | Out-Null
-  $InfoSys.Add('Namasivayam.Krishnamoorthy') | Out-Null
-  $InfoSys.Add('Nivedha.Ganapathy') | Out-Null
-  $InfoSys.Add('Kiran.Poduval') | Out-Null
-  $InfoSys.Add('Ritika.Bakshi') | Out-Null
+  foreach ($infoS in (Get-Content -Path $InfosysList)) {
+    $InfoSys.Add($infoS) | Out-Null   
+  }
 
   $UsersScript = "SET XACT_ABORT ON;
                     BEGIN TRANSACTION;
+
+                    exec dbo.spuSystemIndexReset 'UserCompanyRole'
+
                     DECLARE 
                         @UserName VARCHAR(20),	  @FirstName VARCHAR(50),	@LastName VARCHAR(50), 
                         @CreationDate DATETIME,	  @UserId INT,				@UserCompanyId INT, 
@@ -447,3 +387,4 @@ function Add-tssPLSApplicationUsers {
   }
 
 }
+
