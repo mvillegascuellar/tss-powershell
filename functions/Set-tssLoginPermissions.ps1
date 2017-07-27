@@ -36,6 +36,11 @@
   }
   if ($Environment -cin ('QA', 'INT', 'UAT', 'PERF')) {
     $logins.Add('xpouser') | Out-Null
+    $logins.Add('infosys_team1') | Out-Null
+    $logins.Add('infosys_team2') | Out-Null
+    $logins.Add('infosys_team3') | Out-Null
+    $logins.Add('infosys_team4') | Out-Null
+    $logins.Add('infosys_team5') | Out-Null
   }
   if ($Environment -cin ('DEVXPO')) {
     $logins.Add('infosysuser') | Out-Null
