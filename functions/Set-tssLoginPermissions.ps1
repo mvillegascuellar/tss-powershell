@@ -70,6 +70,9 @@
         if ($PSCmdlet.ShouldProcess($PLSDB, "Asociando los roles de $login")) {
           $PLSDB.Roles['db_datareader'].AddMember($login)
           $PLSDB.Roles['db_datawriter'].AddMember($login)
+          $permission = New-Object -typeName Microsoft.SqlServer.Management.Smo.ObjectPermissionSet
+          $permission.Execute = $true
+          $PLSDB.Schemas['dbo'].Grant($permission, $login)
           if ($Environment -cin ('DEV', 'DEVXPO')) {
             $PLSDB.Roles['db_owner'].AddMember($login)
           }
@@ -95,7 +98,7 @@
             $PLSDB.ServiceBroker.Queues['//XPO/RailOptimizer/DataServices/NotificationsTargetQueue'].grant($permission, $login)
             $permission = New-Object -typeName Microsoft.SqlServer.Management.Smo.ObjectPermissionSet
             $permission.Execute = $true
-            $PLSDB.Schemas['dbo'].Grant($permission, $login)
+            #$PLSDB.Schemas['dbo'].Grant($permission, $login)
             $PLSDB.Schemas['es'].Grant($permission, $login)
             $PLSDB.Schemas['Tzdb'].Grant($permission, $login)
             $PLSDB.Schemas['xpo_portal'].Grant($permission, $login)
