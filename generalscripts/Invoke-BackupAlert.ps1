@@ -18,7 +18,8 @@ function Get-BackupAlerts {
 
   process {
     foreach ($SqlInstance in $SqlInstances) {
-      $dbs = Get-DbaDatabase -SqlInstance $SqlInstance -ExcludeDatabase tempdb, model -Status "Normal" -Access ReadWrite | Where-Object {$_.IsAccessible -eq $true}
+      $dbs = Get-DbaDatabase -SqlInstance $SqlInstance -ExcludeDatabase tempdb, model -Status "Normal" -Access ReadWrite | 
+             Where-Object {$_.IsAccessible -eq $true -and $_.CreateDate -lt (Get-Date).AddDays(-1 * $BackupFullDays)}
       foreach ($db in $dbs) {
         $FullBackup = Get-DbaBackupHistory -SqlInstance $SqlInstance -Database $db.Name -Since (Get-Date).AddDays(-1 * $BackupFullDays) -Type Full
         if ($FullBackup.length -le 0) {
