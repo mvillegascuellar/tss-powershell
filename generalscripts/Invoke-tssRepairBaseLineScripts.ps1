@@ -17,6 +17,7 @@ ForEach ($file in (Get-ChildItem -Path $FilesPath -File)) {
   $content = Get-Content -Path $file.fullName
   $schema = $file.Name.split('.')[0]
   $objectname = $file.Name.split('.')[1]
+  $ModifiedLines = ""
 
   if ($FileType -ne 'Procedure') {
     for ($i = 0; $i -lt $content.Length; $i++) {
