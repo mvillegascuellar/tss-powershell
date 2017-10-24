@@ -35,7 +35,8 @@ ForEach ($file in (Get-ChildItem -Path $FilesPath -File)) {
           $ModifiedLines += "END`n"
         }
       }
-      elseif ($content[$i].ToUpper().startsWith("CREATE $($FileType.ToUpper())")) {
+      # elseif ($content[$i].ToUpper().startsWith("CREATE $($FileType.ToUpper())")) {
+      elseif ($content[$i] -match "^CREATE\s+$FileType") {
         $ModifiedLines += $content[$i].replace('CREATE', 'ALTER') + "`n"
       }
       else {
