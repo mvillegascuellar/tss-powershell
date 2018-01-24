@@ -48,7 +48,7 @@ if ($RetentionPeriod) {
   $CleanupTime = [DateTime]::UtcNow.AddHours(-1 * $RetentionHours)
   $context = New-AzureStorageContext -StorageAccountName tssbackup -StorageAccountKey {EMZqyMGjCb6fVrf8fzakXrXhxT6AYUWiYcrJjVt5mfOwJPGvccs3bKtPLBOe28Lu9r+7BHLGfq7ck6OEYT1uNg==}
   Get-AzureStorageBlob -Container "backupdb" -Context $context | 
-    Where-Object { $_.LastModified.UtcDateTime -lt $CleanupTime -and $_.BlobType -eq "BlockBlob" -and $_.Name -like "$SqlInstance/Full/$DatabaseType/*.$BackupExtension"} |
+    Where-Object { $_.LastModified.UtcDateTime -lt $CleanupTime -and $_.BlobType -eq "BlockBlob" -and $_.Name -like "$SqlInstance/$DatabaseType/*/$BackupType/*.$BackupExtension"} |
     Remove-AzureStorageBlob
 }
 if ($RemoveLocal) {
