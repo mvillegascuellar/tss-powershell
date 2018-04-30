@@ -32,7 +32,12 @@ ForEach ($file in (Get-ChildItem -Path $FilesPath -File)) {
         if ($FileType -eq 'Function') {
           $ModifiedLines += "IF  NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[$schema].[$objectname]') AND type in (N'FN', N'IF', N'TF', N'FS', N'FT'))`n"
           $ModifiedLines += "BEGIN`n"
-          $ModifiedLines += "EXEC dbo.sp_executesql @statement = N'CREATE FUNCTION [$schema].[$objectname] () RETURNS INT AS BEGIN RETURN 0 END' `n"
+          if (Select-String -Path F:\Tmp\Projects\Dole\ListaTVFunctions.txt -SimpleMatch $objectname) {
+            $ModifiedLines += "EXEC dbo.sp_executesql @statement = N'CREATE FUNCTION [$schema].[$objectname] () RETURNS @t TABLE (x int) AS BEGIN RETURN END' "
+          }
+          else {
+            $ModifiedLines += "EXEC dbo.sp_executesql @statement = N'CREATE FUNCTION [$schema].[$objectname] () RETURNS INT AS BEGIN RETURN 0 END' `n"
+          }
           $ModifiedLines += "END`n"
         }
       }
